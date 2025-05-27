@@ -1,0 +1,47 @@
+# Image Prompt: Hex Card Forge - Base Theme & Elements
+
+Create a digital illustration showcasing the core visual design elements and theme of the Hex Card Forge application.
+
+## Visual Style
+- **Art Style**: Dark fantasy/mystical interface with a clean, modern aesthetic
+- **Medium**: Digital UI design illustration
+- **Color Palette**: 
+  * Primary: Rich Byzantine Purple (#4A0072)
+  * Secondary: Goldenrod (#DAA520)
+  * Background: Dark Imperial Blue (#1A1A2E)
+  * Content Areas: Darker (#252538) and slightly lighter (#2C2C44) shades
+  * Text: Light Gray (#E0E0E0) and Medium Gray (#B0B0B0)
+
+## Key Elements to Include
+1. **Header Bar**:
+   - Dark purple rectangle with "HEX CARD FORGE" logo text in white with "FORGE" in gold
+   - Navigation menu with golden underline for active item
+
+2. **Core UI Components**:
+   - Button styles in three variants:
+     * Primary: Purple button with white text
+     * Secondary: Gold button with dark text
+     * Neutral: Dark button with light text and border
+   - Form elements (input fields, dropdown menus) in dark blue with purple accents
+   - Hexagonal card shape (use clip-path polygon geometry) with golden borders
+
+3. **Background Texture**:
+   - Subtle hexagonal pattern or mystical symbols in the background
+   - Slight gradient or vignette effect to enhance readability
+
+4. **Typography Samples**:
+   - Modern sans-serif font family (Inter or similar)
+   - Section titles in gold with purple underlines
+   - Content text in light gray, secondary text in medium gray
+
+5. **Interactive Elements**:
+   - Hover state examples with subtle glow effects in gold
+   - Focus state with gold outlines and soft outer glow
+
+## Mood & Atmosphere
+Create an interface that evokes a sense of arcane knowledge and magical crafting. The design should feel professional but mystical, like a digital grimoire or spellcasting tool. The dark background should create contrast with the vibrant purple and gold accents, making interactive elements pop.
+
+## Additional Notes
+- Include both light and dark variations of UI elements
+- Show responsive adaptations for different screen sizes
+- Demonstrate accessibility considerations with clear contrast ratios

@@ -1,0 +1,58 @@
+# Image Prompt: Hex Card Forge - The Visage Shaper (Image Editor)
+
+Create a digital illustration showcasing the Visage Shaper screen of the Hex Card Forge application, which serves as the image cropping and editing interface.
+
+## Visual Style
+- **Art Style**: Dark fantasy/mystical interface with a clean, modern aesthetic
+- **Medium**: Digital UI design illustration
+- **Color Palette**: 
+  * Primary: Rich Byzantine Purple (#4A0072)
+  * Secondary: Goldenrod (#DAA520)
+  * Background: Dark Imperial Blue (#1A1A2E)
+  * Content Areas: Darker (#252538) and slightly lighter (#2C2C44) shades
+  * Text: Light Gray (#E0E0E0) and Medium Gray (#B0B0B0)
+
+## Key Elements to Include
+
+1. **Overall Layout**:
+   - Split design with image workspace on the left and controls/preview on the right
+   - Top navigation bar with app logo and menu items
+   - Bottom toolbar with action buttons
+
+2. **Left Panel - Image Workspace**:
+   - Large work area displaying a fantasy-themed sample image being edited
+   - Hexagonal overlay/mask showing the crop region
+   - Interactive handles on the hexagon for resizing
+   - Grid overlay with light guidelines
+   - Dark area outside the hexagonal selection (showing masked area)
+   - Original image visible but semi-transparent outside selection
+
+3. **Right Panel - Controls and Preview**:
+   - Control section with labeled sliders for:
+     * Zoom (magnifying glass icon)
+     * Rotation (circular arrow icon)
+     * Opacity (layers icon)
+     * Mask Size (resize icon)
+   - Small preview window showing how the cropped image will appear on a card
+   - Tool options section with buttons for:
+     * Reset (reset icon)
+     * Fit to Frame (frame icon)
+     * Crop Shape (hexagon/circle toggle)
+     * Apply filters (magic wand icon)
+   - "Apply Changes" and "Cancel" buttons at bottom
+
+4. **Visual Effects**:
+   - Glowing purple border around the selected area
+   - Highlighted control points on the hexagonal mask
+   - Subtle magical particle effects around the edited area
+   - Responsive UI elements that appear to glow when interacted with
+
+## Mood & Atmosphere
+Create a precise yet magical image editing environment. The interface should convey the feeling of sculpting an image with arcane tools rather than simply cropping it. The dark theme focuses attention on the image being edited while the magical accents suggest the transformative nature of the tools. The workspace should feel professional but enchanted.
+
+## Additional Notes
+- Show the screen in a desktop aspect ratio (16:9)
+- Illustrate the concept of interactive editing with visual guides
+- Include some sample control elements in an "active" state
+- The UI should feel polished and premium while maintaining the arcane aesthetic
+- Show some sample image being edited that would fit the fantasy card theme

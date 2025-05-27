@@ -1,0 +1,67 @@
+# Image Prompt: Hex Card Forge - The Obsidian Library (Card Management)
+
+Create a digital illustration showcasing the Obsidian Library screen of the Hex Card Forge application, which serves as the card collection and management interface.
+
+## Visual Style
+- **Art Style**: Dark fantasy/mystical interface with a clean, modern aesthetic
+- **Medium**: Digital UI design illustration
+- **Color Palette**: 
+  * Primary: Rich Byzantine Purple (#4A0072)
+  * Secondary: Goldenrod (#DAA520)
+  * Background: Dark Imperial Blue (#1A1A2E)
+  * Content Areas: Darker (#252538) and slightly lighter (#2C2C44) shades
+  * Text: Light Gray (#E0E0E0) and Medium Gray (#B0B0B0)
+
+## Key Elements to Include
+
+1. **Overall Layout**:
+   - Three-column design with sidebar, card grid, and details panel
+   - Top navigation bar with app logo and menu items
+   - Bottom status bar showing collection statistics
+
+2. **Left Sidebar - Filters & Search**:
+   - Dark content area (#252538) with purple header
+   - Search field with a golden magnifying glass icon
+   - Filter sections with headings in gold:
+     * Card Type (checkboxes)
+     * Rarity (colored indicators)
+     * Cost Range (slider)
+     * Tags (multi-select dropdown)
+   - "Apply Filters" button with golden highlight
+   - Collection stats showing total cards and selected cards
+
+3. **Center Area - Card Grid**:
+   - Grid layout of hexagonal card thumbnails (4x3 visible)
+   - Cards showing varied art, names, and types
+   - One card highlighted/selected with a golden glow
+   - Pagination controls at the bottom with current page indicator
+   - Sort options dropdown in the header area
+   - Subtle hover effect on an unselected card
+
+4. **Right Panel - Card Details**:
+   - Selected card displayed in large format with all details
+   - Card name in large golden text
+   - Full card image, type, cost, and rarity indicators
+   - Complete card description in a scrollable area
+   - Action buttons for:
+     * Edit Card (edit icon)
+     * Delete Card (trash icon)
+     * Export Card (download icon)
+     * Duplicate Card (copy icon)
+   - Card creation date and last modified information
+
+## Visual Effects
+- Subtle animated transitions between card selections
+- Magical particle effects emanating from the selected card
+- Depth through card shadows and layering
+- Glowing highlights on interactive elements
+- Scrolling indicators and pagination that suggests more content
+
+## Mood & Atmosphere
+Create an elegant, mystical library interface that feels like browsing a collection of magical artifacts. The dark theme creates a sense of being in an arcane vault or repository of power, while the golden accents highlight the precious nature of the collection. The interface should feel organized yet mysterious, like a librarian's view of a magical archive.
+
+## Additional Notes
+- Show the screen in a desktop aspect ratio (16:9)
+- Demonstrate a diverse set of card designs in the grid
+- Include subtle UI hints about sorting, filtering, and selection interactions
+- The UI should feel polished and premium while maintaining the arcane aesthetic

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hex Card Forge - The Gateway</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Base styles from hex_forge_base.html */
+        :root {
+            /* Main Color Palette */
+            --primary-purple: #4A0072;
+            --primary-purple-dark: #3A005A;
+            --primary-purple-light: #5C4077;
+            
+            --secondary-gold: #DAA520;
+            --secondary-gold-dark: #B8860B;
+            --secondary-gold-light: #FFDB58;
+            
+            /* Background & Content Areas */
+            --background-dark: #1A1A2E;
+            --content-area-dark: #252538;
+            --content-area-medium: #2C2C44;
+            --border-divider: #404058;
+            
+            /* Text Colors */
+            --text-light: #E0E0E0;
+            --text-medium: #B0B0B0;
+            --text-dark: #1A1A2E;
+            
+            /* Effects */
+            --shadow-soft: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 6px 12px rgba(0, 0, 0, 0.15);
+            --shadow-large: 0 10px 20px rgba(0, 0, 0, 0.2);
+            
+            /* Transitions */
+            --transition-standard: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        @keyframes hex-emanate {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { opacity: 0.05; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        /* Gateway Screen Specific Styles */
+        #gateway {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        /* Animated hexagonal background */
+        .hex-bg-animated {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .hex-bg-animated::before,
+        .hex-bg-animated::after {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='115' viewBox='0 0 100 115' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0L93.3013 28.75V86.25L50 115L6.69873 86.25V28.75L50 0Z' fill='%23DAA520'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 100px 115px;
+            animation: hex-emanate 25s linear infinite;
+            opacity: 0;
+        }
+
+        .hex-bg-animated::after {
+            animation-delay: -12.5s;
+            background-image: url("data:image/svg+xml,%3Csvg width='120' height='138' viewBox='0 0 100 115' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0L93.3013 28.75V86.25L50 115L6.69873 86.25V28.75L50 0Z' fill='%235C4077'/%3E%3C/svg%3E");
+            background-size: 120px 138px;
+        }
+
+        /* Title Animation */
+        @keyframes title-fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .title-container {
+            margin-bottom: 60px;
+            text-align: center;
+            animation: title-fade-in 1.5s ease forwards;
+        }
+
+        .main-title {
+            font-size: 4rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .main-title .highlight {
+            color: var(--secondary-gold);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-medium);
+            font-weight: 400;
+        }
+
+        /* Hexagon Menu Layout */
+        .hex-menu-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Hexagon Button Styling */
+        .hex-button {
+            width: 200px;
+            height: 180px;
+            margin: 15px;
+            background-color: var(--primary-purple);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 20px;
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            cursor: pointer;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .hex-button:hover {
+            transform: scale(1.05);
+            background-color: var(--primary-purple-light);
+        }
+
+        .hex-button .icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: var(--secondary-gold);
+        }
+
+        .hex-button .btn-title {
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+
+        .hex-button .btn-description {
+            font-size: 0.8rem;
+            color: var(--text-medium);
+            max-width: 150px;
+        }
+
+        /* Menu Animation */
+        @keyframes menu-fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .menu-item {
+            opacity: 0;
+            animation: menu-fade-in 0.5s ease forwards;
+        }
+
+        .menu-item:nth-child(1) { animation-delay: 0.2s; }
+        .menu-item:nth-child(2) { animation-delay: 0.4s; }
+        .menu-item:nth-child(3) { animation-delay: 0.6s; }
+        .menu-item:nth-child(4) { animation-delay: 0.8s; }
+        .menu-item:nth-child(5) { animation-delay: 1.0s; }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 3rem;
+            }
+
+            .hex-menu-container {
+                flex-direction: column;
+            }
+
+            .hex-button {
+                width: 180px;
+                height: 160px;
+                margin: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-title {
+                font-size: 2.5rem;
+            }
+
+            .hex-button {
+                width: 160px;
+                height: 140px;
+            }
+
+            .hex-button .icon {
+                font-size: 2rem;
+            }
+
+            .hex-button .btn-title {
+                font-size: 1rem;
+            }
+        }
+
+        /* Footer */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px 0;
+            background-color: var(--background-dark);
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-medium);
+        }
+
+        .footer .version {
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <!-- The Gateway (Title Screen) -->
+    <div id="gateway">
+        <!-- Animated Hexagonal Background -->
+        <div class="hex-bg-animated"></div>
+
+        <!-- Title Section -->
+        <div class="title-container">
+            <h1 class="main-title">CARD <span class="highlight">FORGE</span></h1>
+            <p class="subtitle">Craft hexagonal cards with mystical precision</p>
+        </div>
+
+        <!-- Hexagon Menu -->
+        <div class="hex-menu-container">
+            <!-- Create New Card -->
+            <a href="#" class="hex-button menu-item" data-screen="scriptorium">
+                <i class="icon fas fa-plus-circle"></i>
+                <h3 class="btn-title">Create Card</h3>
+                <p class="btn-description">Design a new hexagonal card from scratch</p>
+            </a>
+
+            <!-- Import Cards -->
+            <a href="#" class="hex-button menu-item" data-screen="obsidian-library">
+                <i class="icon fas fa-file-import"></i>
+                <h3 class="btn-title">Import Cards</h3>
+                <p class="btn-description">Import existing cards from your collection</p>
+            </a>
+
+            <!-- Image Tool -->
+            <a href="#" class="hex-button menu-item" data-screen="visage-shaper">
+                <i class="icon fas fa-crop-alt"></i>
+                <h3 class="btn-title">Image Tool</h3>
+                <p class="btn-description">Shape your images into perfect hexagons</p>
+            </a>
+
+            <!-- Card Library -->
+            <a href="#" class="hex-button menu-item" data-screen="obsidian-library">
+                <i class="icon fas fa-book"></i>
+                <h3 class="btn-title">Card Library</h3>
+                <p class="btn-description">Browse and manage your collection</p>
+            </a>
+
+            <!-- Booster Pack -->
+            <a href="#" class="hex-button menu-item" data-screen="collection-forge">
+                <i class="icon fas fa-layer-group"></i>
+                <h3 class="btn-title">Booster Packs</h3>
+                <p class="btn-description">Create custom card packages</p>
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <span class="version">Hex Card Forge v1.2</span> • <span class="copyright">© 2025</span>
+        </div>
+    </div>
+
+    <!-- Simple JavaScript for demonstration -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuButtons = document.querySelectorAll('.hex-button');
+            
+            menuButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetScreen = this.getAttribute('data-screen');
+                    alert(`Navigating to "${targetScreen}" screen. This would connect to the main application.`);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

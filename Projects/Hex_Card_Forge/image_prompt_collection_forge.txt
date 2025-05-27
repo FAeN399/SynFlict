@@ -1,0 +1,65 @@
+# Image Prompt: Hex Card Forge - The Collection Forge (Booster Pack Creation)
+
+Create a digital illustration showcasing the Collection Forge screen of the Hex Card Forge application, which serves as the booster pack creation interface.
+
+## Visual Style
+- **Art Style**: Dark fantasy/mystical interface with a clean, modern aesthetic
+- **Medium**: Digital UI design illustration
+- **Color Palette**: 
+  * Primary: Rich Byzantine Purple (#4A0072)
+  * Secondary: Goldenrod (#DAA520)
+  * Background: Dark Imperial Blue (#1A1A2E)
+  * Content Areas: Darker (#252538) and slightly lighter (#2C2C44) shades
+  * Text: Light Gray (#E0E0E0) and Medium Gray (#B0B0B0)
+
+## Key Elements to Include
+
+1. **Overall Layout**:
+   - Three-panel design with card selection on left, pack preview in center, and pack details on right
+   - Top navigation bar with app logo and menu items
+   - Bottom action bar with save and export buttons
+
+2. **Left Panel - Card Selection**:
+   - Scrollable grid of hexagonal card thumbnails
+   - Cards organized by type and rarity with colored borders
+   - Selection indicators on cards that have been chosen
+   - Search bar with filters at the top
+   - Counter showing "Selected: X/Y" cards
+   - Small drag indicator suggesting cards can be dragged to the center panel
+
+3. **Center Panel - Pack Preview**:
+   - Large hexagonal booster pack design with golden border
+   - Pack artwork preview at the top (customizable)
+   - List of selected cards shown beneath the pack art
+   - Visual indicator showing card distribution by rarity
+   - "Arrange Cards" button allowing order customization
+   - Pack preview that resembles a physical packaging design
+
+4. **Right Panel - Pack Details**:
+   - Form for entering pack information:
+     * Pack Name (text field with golden border)
+     * Description (text area)
+     * Release Date (date picker)
+     * Edition (dropdown)
+     * Rarity Distribution (interactive pie chart)
+     * Pack Icon/Symbol selection
+   - "Generate Preview" button with purple background and gold text
+   - "Export Pack" button with golden glow effect
+   - Pack statistics showing card count by type
+
+5. **Visual Effects**:
+   - Magical energy flowing between selected cards and pack preview
+   - Shimmering effect on the booster pack artwork
+   - Subtle particle effects around actively selected elements
+   - Depth through layered UI elements and shadows
+   - Glow effects on interactive buttons
+
+## Mood & Atmosphere
+Create an alchemical workshop atmosphere that conveys the feeling of crafting and combining elements into something greater. The interface should feel like a magical forge where individual cards are being assembled into a curated collection. The dark theme enhances the mystical quality while highlighting the colorful cards and golden interactive elements.
+
+## Additional Notes
+- Show the screen in a desktop aspect ratio (16:9)
+- Include a diverse set of card designs with varying art styles and colors
+- Demonstrate the workflow with visual cues (arrows, highlights)
+- The UI should feel polished and premium while maintaining the arcane aesthetic
+- Show at least one element in an interactive state (hovering, selecting)

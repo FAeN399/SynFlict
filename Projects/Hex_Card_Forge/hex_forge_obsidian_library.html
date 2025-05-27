@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hex Card Forge - GUI Prototype</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4A0072; /* Rich Byzantine Purple */
+            --primary-dark: #3A005A;
+            --primary-light: #5C4077; /* Dark Lavender */
+            --secondary: #DAA520; /* Goldenrod */
+            --secondary-dark: #B8860B;
+            --secondary-light: #F0C14C; 
+            --background: #1A1A2E; /* Dark Imperial Blue */
+            --bg-content: #252538; /* Darker content area */
+            --bg-content-light: #2C2C44; 
+            --text-light: #E0E0E0; 
+            --text-medium: #B0B0B0; 
+            --text-dark-contrast: #1A1A2E; 
+            --border: #404058;
+            --border-focus: var(--secondary);
+            --text-error: #F87171; 
+            --focus-outline-width: 2px;
+            --focus-outline-offset: 1px;
+            --focus-glow-color: rgba(218, 165, 32, 0.4);
+            --spacing-unit: 8px;
+            --sidebar-width: 240px;
+            --sidebar-width-collapsed: 60px; /* For potential collapsed state */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            color: var(--text-light);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden; 
+            display: flex; /* For sidebar layout */
+            flex-direction: column; /* Header above content */
+        }
+        
+        .app-shell { /* New wrapper for sidebar + main content */
+            display: flex;
+            flex-grow: 1; /* Take remaining height after header */
+            min-height: 0; /* Fix for flex item overflow */
+        }
+
+
+        .hidden-visually {
+            border: 0;
+            clip: rect(0 0 0 0);
+            height: 1px;
+            margin: -1px;
+            overflow: hidden;
+            padding: 0;
+            position: absolute;
+            width: 1px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 calc(var(--spacing-unit) * 2.5); 
+        }
+
+        .screen {
+            display: none; 
+            opacity: 0;
+            animation: screenFadeIn 0.3s ease-out forwards;
+            width: 100%;
+        }
+
+        .screen.active {
+            display: block; 
+            opacity: 1;
+            z-index: 1; 
+        }
+        @keyframes screenFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        *:focus-visible {
+            outline: var(--focus-outline-width) solid var(--border-focus) !important;
+            outline-offset: var(--focus-outline-offset) !important;
+            box-shadow: 0 0 0 calc(var(--focus-outline-width) + 2px) var(--focus-glow-color) !important;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: var(--text-light);
+            border: none;
+            padding: calc(var(--spacing-unit) * 1.25) calc(var(--spacing-unit) * 2); 
+            border-radius: calc(var(--spacing-unit) * 0.5); 
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            min-width: 44px;
+        }
+        .btn:hover { background-color: var(--primary-dark); }
+        .btn:active { transform: scale(0.98); }
+        .btn-secondary { background-color: var(--secondary); color: var(--text-dark-contrast); }
+        .btn-secondary:hover { background-color: var(--secondary-dark); }
+        .btn-neutral { background-color: var(--bg-content-light); color: var(--text-light); border: 1px solid var(--border); }
+        .btn-neutral:hover { background-color: var(--border); }
+        .btn-danger { background-color: #991B1B; }
+        .btn-danger:hover { background-color: #7F1D1D; }
+        .btn--icon { padding: var(--spacing-unit); }
+        .btn i.fas { margin-right: var(--spacing-unit); }
+
+
+        .hex-card-shape { 
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
+
+        /* App Sidebar (Main Navigation) */
+        .app-sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--primary);
+            color: var(--text-light);
+            padding: calc(var(--spacing-unit) * 2);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
+            overflow-y: auto;
+            flex-shrink: 0; /* Prevent shrinking */
+            height: 100vh; /* Full height */
+            position: sticky; /* Stick to top */
+            top: 0;
+        }
+        .app-sidebar__header {
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            text-align: center;
+        }
+        .app-sidebar__logo h1 {
+            font-size: 1.75rem;
+            font-weight: 900;
+            color: var(--text-light);
+        }
+        .app-sidebar__logo span { color: var(--secondary); }
+
+        .app-sidebar__nav-list { list-style: none; padding: 0; margin: 0; }
+        .app-sidebar__nav-item { margin-bottom: var(--spacing-unit); }
+        .app-sidebar__nav-link {
+            display: flex;
+            align-items: center;
+            padding: calc(var(--spacing-unit) * 1.25) var(--spacing-unit);
+            border-radius: calc(var(--spacing-unit) * 0.5);
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .app-sidebar__nav-link i.fas {
+            margin-right: calc(var(--spacing-unit) * 1.5);
+            width: 20px; /* Fixed width for icon alignment */
+            text-align: center;
+        }
+        .app-sidebar__nav-link:hover, .app-sidebar__nav-link:focus-visible {
+            background-color: var(--primary-dark);
+            color: var(--secondary);
+        }
+        .app-sidebar__nav-link.active-nav-link {
+            background-color: var(--secondary);
+            color: var(--text-dark-contrast);
+            font-weight: 700;
+        }
+        .app-sidebar__nav-link.active-nav-link i.fas { color: var(--text-dark-contrast); }
+
+        /* Main Content Area */
+        .app-main-content {
+            flex-grow: 1;
+            background-color: var(--background);
+            padding: calc(var(--spacing-unit) * 3);
+            overflow-y: auto; /* Allow content to scroll */
+            height: 100vh; /* Full height */
+        }
+
+
+        .content-screen-padding { 
+             /* Padding is now on app-main-content, screens are full width of it */
+        }
+        
+        .section-title {
+            color: var(--secondary);
+            margin-bottom: calc(var(--spacing-unit) * 2); 
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: var(--spacing-unit); 
+            font-size: 1.75rem; /* Adjusted for main content area titles */
+            font-weight: 700;
+        }
+        
+        .form-section form, .pack-form { /* ... existing styles ... */ }
+        .form-group { /* ... existing styles ... */ }
+        .form-group label { /* ... existing styles ... */ }
+        .form-control { /* ... existing styles ... */ }
+        .form-control.input-error { /* ... existing styles ... */ }
+        .error-message-text { /* ... existing styles ... */ }
+
+        .scriptorium-container, .visage-container, .forge-container, .library-container { /* Added library-container */
+            display: grid;
+            grid-template-columns: 1fr; 
+            gap: calc(var(--spacing-unit) * 3); 
+            background-color: var(--bg-content);
+            padding: calc(var(--spacing-unit) * 2.5); 
+            border-radius: var(--spacing-unit); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        @media (min-width: 992px) { 
+            .scriptorium-container, .visage-container {
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); 
+            }
+            .forge-container { 
+                 grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); 
+            }
+            .library-container { /* Library doesn't have split view, it's one main area */
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* ... Scriptorium, Visage Shaper, Collection Forge specific styles from previous version ... */
+        /* Ensure they fit within the new .app-main-content and .screen structure */
+
+        /* Obsidian Library Specific Styles */
+        .library-toolbar {
+            display: flex;
+            flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+            gap: calc(var(--spacing-unit) * 2);
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            padding: calc(var(--spacing-unit) * 2);
+            background-color: var(--bg-content-light);
+            border-radius: var(--spacing-unit);
+        }
+        .library-toolbar__search {
+            display: flex;
+            align-items: center;
+            background-color: var(--bg-content);
+            border: 1px solid var(--border);
+            border-radius: var(--spacing-unit) * 0.5;
+            padding-left: var(--spacing-unit);
+        }
+        .library-toolbar__search i.fas { color: var(--text-medium); }
+        .library-toolbar__search input {
+            padding: calc(var(--spacing-unit) * 1.25);
+            background-color: transparent;
+            border: none;
+            color: var(--text-light);
+            flex-grow: 1;
+            min-width: 200px;
+        }
+        .library-toolbar__search input:focus { outline: none; }
+
+        .library-toolbar__actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-unit);
+        }
+        .library-toolbar__actions .btn i.fas { margin-right: calc(var(--spacing-unit) * 0.5); }
+
+        .library-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: calc(var(--spacing-unit) * 2.5);
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+        .library-card-item {
+            background-color: var(--bg-content-light);
+            aspect-ratio: 1 / 1.15;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end; /* Content at bottom */
+            padding: var(--spacing-unit);
+            cursor: pointer;
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
+            border: 2px solid var(--border);
+            position: relative; /* For hover actions and type indicator */
+            overflow: hidden; /* For hex shape */
+        }
+        .library-card-item:hover, .library-card-item.selected {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 var(--spacing-unit) calc(var(--spacing-unit) * 2) rgba(var(--secondary-rgb, 218,165,32), 0.3); /* Use RGB for color in shadow */
+            border-color: var(--secondary);
+        }
+        .library-card-item.selected {
+             border-width: 3px; /* Thicker border for selected */
+        }
+
+        .library-card-item__thumbnail {
+            width: 100%;
+            height: 70%; /* Adjust as needed */
+            background-color: var(--bg-content);
+            margin-bottom: var(--spacing-unit);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            /* Hex shape applied to parent, or apply here if image itself is hex */
+        }
+        .library-card-item__thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .library-card-item__info {
+            text-align: center;
+            width: 100%;
+            padding: calc(var(--spacing-unit) * 0.5);
+            background-color: rgba(0,0,0,0.5); /* Slight backdrop for readability */
+            border-radius: 0 0 calc(var(--spacing-unit)*0.25) calc(var(--spacing-unit)*0.25);
+        }
+        .library-card-item__title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: calc(var(--spacing-unit) * 0.25);
+        }
+        .library-card-item__type {
+            font-size: 0.75rem;
+            color: var(--text-medium);
+        }
+        .library-card-item__type-indicator {
+            position: absolute;
+            top: var(--spacing-unit);
+            right: var(--spacing-unit);
+            width: calc(var(--spacing-unit) * 2.5);
+            height: calc(var(--spacing-unit) * 2.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: var(--text-dark-contrast);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        /* Example type colors */
+        .type-artifact { background-color: var(--accent-bronze); }
+        .type-spell { background-color: var(--primary-light); }
+        .type-creature { background-color: #22c55e; } /* Green-500 */
+
+
+        .library-card-item__hover-actions {
+            position: absolute;
+            bottom: calc(var(--spacing-unit) * 6); /* Adjust to be above title */
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: var(--spacing-unit);
+            padding: var(--spacing-unit);
+            background-color: rgba(var(--bg-content-rgb, 37,37,56), 0.9); /* Use RGB for alpha */
+            border-radius: var(--spacing-unit);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+            z-index: 5;
+        }
+        .library-card-item:hover .library-card-item__hover-actions,
+        .library-card-item:focus-within .library-card-item__hover-actions { /* Show on focus within too */
+            opacity: 1;
+            visibility: visible;
+        }
+        .library-card-item__hover-actions .btn--icon {
+            background-color: var(--primary-light);
+            padding: calc(var(--spacing-unit) * 0.75);
+        }
+        .library-card-item__hover-actions .btn--icon:hover { background-color: var(--primary-dark); }
+
+
+        .library-pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: calc(var(--spacing-unit) * 3);
+            padding: var(--spacing-unit) 0;
+            border-top: 1px solid var(--border);
+            color: var(--text-medium);
+        }
+        .library-pagination__info { font-size: 0.9rem; }
+        .library-pagination__controls button { margin-left: var(--spacing-unit); }
+        .library-pagination__controls button[disabled] { opacity: 0.5; cursor: not-allowed; }
+        .library-pagination__page-numbers button {
+            background: none;
+            border: 1px solid transparent;
+            color: var(--text-medium);
+        }
+        .library-pagination__page-numbers button.current-page {
+            font-weight: bold;
+            color: var(--secondary);
+            border-color: var(--secondary);
+        }
+
+
+        .empty-library-message {
+            text-align: center;
+            padding: calc(var(--spacing-unit) * 5);
+            color: var(--text-medium);
+            font-size: 1.1rem;
+        }
+        .empty-library-message i.fas {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: var(--spacing-unit);
+            color: var(--primary-light);
+        }
+
+        /* Mobile adjustments for sidebar */
+        @media (max-width: 768px) {
+            .app-sidebar {
+                position: fixed;
+                transform: translateX(-100%);
+                height: 100vh;
+                z-index: 1001; /* Above everything */
+            }
+            .app-sidebar--open {
+                transform: translateX(0);
+            }
+            .app-main-content {
+                width: 100%; /* Take full width when sidebar is hidden/overlay */
+            }
+            .mobile-menu-toggle { /* Button to toggle sidebar */
+                display: inline-flex !important; /* Make it visible */
+                position: fixed;
+                top: calc(var(--spacing-unit) * 1.5);
+                left: calc(var(--spacing-unit) * 1.5);
+                z-index: 1002; /* Above sidebar */
+                background-color: var(--primary);
+                border: 1px solid var(--secondary);
+            }
+            body.sidebar-open .app-main-content {
+                /* Optional: Add overlay or shift content */
+                /* margin-left: var(--sidebar-width); */
+            }
+        }
+
+
+        /* Scriptorium, Visage Shaper, Collection Forge specific styles from previous version */
+        /* (Ensure they are compatible with the new .app-main-content > .screen structure) */
+        /* ... (styles for Scriptorium, Visage Shaper, Collection Forge from previous version,
+               adjusted for the new layout if necessary, e.g., removing screen-level padding if handled by app-main-content) ... */
+        .card-list, .metadata-list {
+             /* Custom scrollbar for these lists */
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-light) var(--bg-content);
+        }
+        .card-list::-webkit-scrollbar, .metadata-list::-webkit-scrollbar { width: calc(var(--spacing-unit)*0.75); }
+        .card-list::-webkit-scrollbar-track, .metadata-list::-webkit-scrollbar-track { background: var(--bg-content); }
+        .card-list::-webkit-scrollbar-thumb, .metadata-list::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: calc(var(--spacing-unit)*0.5); }
+        
+         /* Ensure section titles within screens are consistent */
+        .scriptorium-container .section-title,
+        .visage-container .section-title,
+        .forge-container .section-title {
+            color: var(--secondary);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: var(--spacing-unit);
+            font-size: 1.5rem; /* Consistent title size within screen sections */
+            font-weight: 700;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="app-sidebar" id="appSidebar" role="navigation" aria-label="Main application navigation">
+            <div class="app-sidebar__header">
+                <div class="app-sidebar__logo">
+                    <h1>HEX <span>CARD</span> FORGE</h1>
+                </div>
+            </div>
+            <ul class="app-sidebar__nav-list">
+                <li class="app-sidebar__nav-item">
+                    <a href="#gateway" class="app-sidebar__nav-link data-nav-link" data-screen="gateway">
+                        <i class="fas fa-dungeon"></i> Gateway
+                    </a>
+                </li>
+                <li class="app-sidebar__nav-item">
+                    <a href="#obsidian-library" class="app-sidebar__nav-link data-nav-link active-nav-link" data-screen="obsidian-library" aria-current="page">
+                        <i class="fas fa-book-dead"></i> Library
+                    </a>
+                </li>
+                <li class="app-sidebar__nav-item">
+                    <a href="#scriptorium" class="app-sidebar__nav-link data-nav-link" data-screen="scriptorium">
+                        <i class="fas fa-scroll"></i> Scriptorium
+                    </a>
+                </li>
+                <li class="app-sidebar__nav-item">
+                    <a href="#visage-shaper" class="app-sidebar__nav-link data-nav-link" data-screen="visage-shaper">
+                        <i class="fas fa-crop-alt"></i> Visage Shaper
+                    </a>
+                </li>
+                <li class="app-sidebar__nav-item">
+                    <a href="#collection-forge" class="app-sidebar__nav-link data-nav-link" data-screen="collection-forge">
+                        <i class="fas fa-archive"></i> Collection Forge
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <main class="app-main-content" role="main" id="mainWorkspace">
+            <button id="mobileMenuToggle" class="btn btn--icon mobile-menu-toggle" aria-label="Toggle Menu" aria-expanded="false" aria-controls="appSidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <section id="gateway" class="screen">
+                <div class="hex-bg"></div>
+                <div class="title-section">
+                    <h1>HEX <span>CARD</span> FORGE</h1>
+                    <p>Craft Your Legend, One Hex at a Time</p>
+                </div>
+                <div class="hex-menu container">
+                    <a href="#" class="menu-option hex-card-shape" style="--i:1;" data-screen-link="scriptorium" aria-label="Create New Card">
+                        <i class="fas fa-magic"></i> <h3>Create New Card</h3><p>Begin a new artifact of power.</p>
+                    </a>
+                    <a href="#" class="menu-option hex-card-shape" style="--i:2;" data-screen-link="obsidian-library" aria-label="Open Card Library">
+                        <i class="fas fa-book-open"></i><h3>Card Library</h3><p>Browse your collection of relics.</p>
+                    </a>
+                    <a href="#" class="menu-option hex-card-shape" style="--i:3;" data-screen-link="collection-forge" aria-label="Create Booster Pack">
+                        <i class="fas fa-box-open"></i><h3>Booster Packs</h3><p>Assemble collections of might.</p>
+                    </a>
+                    <a href="#" class="menu-option hex-card-shape" style="--i:4;" data-screen-link="scriptorium" aria-label="Design Card Template">
+                        <i class="fas fa-drafting-compass"></i><h3>Design Template</h3><p>Shape card layouts and defaults.</p>
+                    </a>
+                    <a href="#" class="menu-option hex-card-shape" style="--i:5;" data-screen-link="visage-shaper" aria-label="Image Tools">
+                        <i class="fas fa-crop-alt"></i><h3>Image Tools</h3><p>Refine visages for your cards.</p>
+                    </a>
+                </div>
+            </section>
+
+            <section id="obsidian-library" class="screen active" aria-labelledby="library-main-title" tabindex="-1">
+                <div class="library-container">
+                    <h2 id="library-main-title" class="section-title">The Obsidian Library</h2>
+                    <div class="library-toolbar">
+                        <div class="library-toolbar__search">
+                            <i class="fas fa-search"></i>
+                            <label for="librarySearchInput" class="hidden-visually">Search Cards in Library</label>
+                            <input type="search" id="librarySearchInput" placeholder="Search by name, type, lore...">
+                        </div>
+                        <div class="library-toolbar__actions">
+                            <div class="tooltip">
+                                <button class="btn btn-neutral" id="filterCardsBtn" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-filter"></i> Filters
+                                </button>
+                                <span class="tooltip-text" role="tooltip">Filter cards by type, rarity, etc.</span>
+                            </div>
+                             <div class="tooltip">
+                                <button class="btn btn-neutral" id="viewToggleBtn" aria-label="Toggle list view">
+                                    <i class="fas fa-list"></i> <span class="view-mode-text">List View</span>
+                                </button>
+                                <span class="tooltip-text" role="tooltip">Toggle between Grid and List view.</span>
+                            </div>
+                            <button class="btn btn-neutral" data-screen-link="scriptorium">
+                                <i class="fas fa-file-import"></i> Import Cards
+                            </button>
+                            <button class="btn btn-secondary" data-screen-link="scriptorium">
+                                <i class="fas fa-plus-circle"></i> Create New Card
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="libraryCardGrid" class="library-card-grid" aria-live="polite">
+                        <p class="empty-library-message hidden"><i class="fas fa-ghost"></i>No relics found matching your query. Try a different incantation!</p>
+                    </div>
+
+                    <div class="library-pagination">
+                        <span id="paginationInfo" class="library-pagination__info">Showing 0-0 of 0 cards</span>
+                        <div class="library-pagination__controls">
+                            <button id="prevPageBtn" class="btn btn--icon btn-neutral" aria-label="Previous page" disabled><i class="fas fa-chevron-left"></i></button>
+                            <span id="pageNumbersContainer" class="library-pagination__page-numbers"></span>
+                            <button id="nextPageBtn" class="btn btn--icon btn-neutral" aria-label="Next page" disabled><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="scriptorium" class="screen content-screen-padding">
+                 <div class="container" style="padding:0;"> <div class="scriptorium-container">
+                        <div class="form-section">
+                            <h2 class="section-title">Card Creation Form</h2>
+                            <form id="cardForm">
+                                <div class="form-group">
+                                    <label for="cardTitle">Card Title</label>
+                                    <input type="text" id="cardTitle" class="form-control" placeholder="e.g., Arcane Hexstone" value="Arcane Hexstone" required aria-describedby="cardTitleError">
+                                    <p id="cardTitleError" class="error-message-text" aria-live="assertive"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cardImageUpload">Card Image</label>
+                                    <input type="file" id="cardImageUpload" class="form-control" accept="image/*" aria-describedby="cardImageError">
+                                     <div class="card-image-preview hex-card-shape" id="editorImagePreviewContainer" style="width:120px; height:138px; margin-top:var(--spacing-unit); background-color: var(--bg-content-light); border:1px solid var(--border)">
+                                        <img id="editorImagePreview" src="#" alt="Selected image preview" style="display:none; width:100%; height:100%; object-fit:cover;">
+                                        <span id="editorImagePlaceholder" class="card-image-preview--empty" style="font-size:0.8rem; padding: var(--spacing-unit)">No Image Selected</span>
+                                    </div>
+                                    <p id="cardImageError" class="error-message-text" aria-live="assertive"></p>
+                                </div>
+                                
+                                <h3 class="section-title" style="font-size: 1.25rem; margin-bottom: var(--spacing-unit); border-bottom-width: 1px; padding-bottom: calc(var(--spacing-unit)*0.5);">Metadata Properties</h3>
+                                <div id="metadataList" class="metadata-list" aria-live="polite" aria-relevant="additions removals">
+                                    <div class="metadata-item">
+                                        <label for="metaKey0" class="hidden-visually">Property Name 0</label>
+                                        <input type="text" id="metaKey0" class="form-control metadata-key" placeholder="Property Name" value="Type" aria-describedby="metaKeyError0">
+                                        <label for="metaValue0" class="hidden-visually">Property Value 0</label>
+                                        <input type="text" id="metaValue0" class="form-control metadata-value" placeholder="Property Value" value="Artifact" aria-describedby="metaValueError0">
+                                        <button type="button" class="btn btn--danger btn--icon remove-metadata-btn" aria-label="Remove Type property">&times;</button>
+                                        <p id="metaKeyError0" class="error-message-text metadata-error" style="grid-column: 1;"></p>
+                                        <p id="metaValueError0" class="error-message-text metadata-error" style="grid-column: 2;"></p>
+                                    </div>
+                                    </div>
+                                <div class="add-metadata-btn-container">
+                                    <button type="button" id="addMetadataBtn" class="btn btn-neutral">Add Property</button>
+                                </div>
+                                 <div class="action-buttons" style="margin-top: calc(var(--spacing-unit)*3);">
+                                    <button type="button" class="btn btn-secondary" id="saveCardBtn">Save Card</button>
+                                    <button type="button" class="btn btn-neutral" id="exportCardBtn">Export Card</button>
+                                    <button type="button" class="btn btn-neutral" id="clearFormBtn">Cancel / Clear</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="preview-section">
+                            <h2 class="section-title">Card Preview</h2>
+                            <div class="card-preview-wrapper">
+                                <div id="liveCardPreview" class="card-preview-display hex-card-shape">
+                                    <div class="card-image-preview" id="previewImageContainer">
+                                        <img id="previewImage" src="#" alt="Card image preview" style="display:none;">
+                                        <span id="previewImagePlaceholder" class="card-image-preview--empty">Card Image Area</span>
+                                    </div>
+                                    <h3 id="previewTitle" class="card-title-preview">Arcane Hexstone</h3>
+                                    <div id="previewMetadata" class="card-metadata-preview">
+                                        </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="visage-shaper" class="screen content-screen-padding">
+                 <div class="container" style="padding:0;">
+                    <div class="visage-container">
+                        <div class="cropping-section">
+                            <h2 class="section-title">Shape the Visage</h2>
+                            <div class="cropping-area" id="croppingAreaContainer">
+                                <img id="imageToCrop" src="https://placehold.co/600x450/2C2C44/B0B0B0?text=Upload+Image+to+Crop" alt="Image to crop">
+                                <div id="cropOverlay" class="crop-overlay hex-card-shape"></div>
+                            </div>
+                            <div class="cropping-controls">
+                                <div class="control-group">
+                                    <label for="zoomSlider">Zoom:</label>
+                                    <input type="range" id="zoomSlider" class="form-control" min="50" max="200" value="100">
+                                </div>
+                                </div>
+                        </div>
+                        <div class="result-section">
+                            <h2 class="section-title">Shaped Preview</h2>
+                            <div class="result-preview-container hex-card-shape" id="cropResultPreview">
+                                </div>
+                            <div class="action-buttons">
+                               <button type="button" class="btn btn-secondary" id="applyCropBtn">Apply Shape</button>
+                               <button type="button" class="btn btn--neutral" data-screen-link="scriptorium">Back to Editor</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="collection-forge" class="screen content-screen-padding">
+                 <div class="container" style="padding:0;">
+                     <div class="forge-container">
+                        <div class="card-selection">
+                            <h2 class="section-title">Available Cards</h2>
+                            <div class="toolbar">
+                                 <div class="search-bar">
+                                    <label for="packCardSearch" class="hidden-visually">Search cards for pack</label>
+                                    <input type="search" id="packCardSearch" class="form-control" placeholder="Filter cards by name, type...">
+                                    <button class="btn" aria-label="Filter Cards"><i class="fas fa-filter"></i></button>
+                                </div>
+                                <div class="card-selection__actions">
+                                    <button id="selectAllCardsBtn" class="btn btn-neutral">Select All</button>
+                                    <button id="clearSelectedCardsBtn" class="btn btn-neutral">Clear All</button>
+                                </div>
+                            </div>
+                            <div id="packCardList" class="card-list" role="listbox" aria-label="Available cards for pack selection">
+                                </div>
+                            <p id="selectedCardsCount" class="selected-cards-indicator" aria-live="polite"><strong>0</strong> cards selected</p>
+                        </div>
+                        <div class="pack-details">
+                            <h2 class="section-title">Pack Details</h2>
+                            <form id="packForm" class="pack-form">
+                                <div class="form-group">
+                                    <label for="packName">Pack Name</label>
+                                    <input type="text" id="packName" class="form-control" value="Mystic Artifacts Collection" required aria-describedby="packNameError">
+                                    <p id="packNameError" class="error-message-text"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label for="packDescription">Description</label>
+                                    <textarea id="packDescription" class="form-control" rows="3" placeholder="A curated set of powerful magical artifacts...">A curated set of powerful magical artifacts from the ancient archives.</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="packIconUpload">Pack Icon/Sigil (Optional)</label>
+                                    <div class="pack-icon-upload-area">
+                                        <input type="file" id="packIconUpload" class="form-control" accept="image/*" style="flex-grow:1">
+                                        <div class="pack-icon-preview" id="packIconPreview">
+                                            <i class="fas fa-shield-alt" style="font-size: 2rem; color: var(--text-medium);"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mini-preview-area">
+                                    <h4>Selected Cards Preview (<span id="miniPreviewCount">0</span>):</h4>
+                                    <div id="selectedCardsMiniPreview" class="mini-preview-grid">
+                                        </div>
+                                </div>
+
+                                <div class="export-options-section">
+                                    <h4>Export Options</h4>
+                                    <div class="form-group">
+                                        <label for="compressionLevel">Compression Level</label>
+                                        <select id="compressionLevel" class="form-control">
+                                            <option value="none">None</option>
+                                            <option value="low" selected>Low</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="high">High</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Include in Export:</label>
+                                        <div class="checkbox-group">
+                                            <input type="checkbox" id="includeImages" checked> <label for="includeImages">Card Images</label>
+                                        </div>
+                                        <div class="checkbox-group">
+                                            <input type="checkbox" id="includeMetadataJson" checked> <label for="includeMetadataJson">Metadata (JSON)</label>
+                                        </div>
+                                        <div class="checkbox-group">
+                                            <input type="checkbox" id="includePackInfo"> <label for="includePackInfo">Pack Info File</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="exportFormat">Export Format</label>
+                                        <select id="exportFormat" class="form-control">
+                                            <option value="zip">ZIP Archive</option>
+                                            <option value="folder">Folder Structure</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="fileNameTemplate">File Naming Template</label>
+                                        <div class="tooltip">
+                                            <input type="text" id="fileNameTemplate" class="form-control" value="{packName}_{date}">
+                                            <span class="tooltip-text" role="tooltip" style="width:220px; bottom:110%;">Use placeholders like {packName}, {cardName}, {date}, {id}.</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="pack-action-buttons">
+                                    <button type="button" class="btn btn-secondary" id="createPackBtn">Create Pack</button>
+                                    <button type="button" class="btn btn-neutral" id="savePackDraftBtn">Save as Draft</button>
+                                    <button type="button" class="btn btn-neutral" id="cancelPackCreationBtn">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const mainNavLinks = document.querySelectorAll('.app-sidebar__nav-link.data-nav-link');
+    const gatewayScreenLinks = document.querySelectorAll('#gateway [data-screen-link]');
+    const allScreenChangeLinks = [...mainNavLinks, ...gatewayScreenLinks];
+
+    const screens = document.querySelectorAll('.screen');
+    const appSidebar = document.getElementById('appSidebar');
+    const mobileMenuToggleBtn = document.getElementById('mobileMenuToggle');
+    const mainWorkspaceEl = document.getElementById('mainWorkspace');
+
+
+    function showScreen(screenId) {
+        let screenFocused = false;
+        screens.forEach(screen => {
+            const isActive = screen.id === screenId;
+            screen.classList.toggle('active', isActive);
+            if(isActive) {
+                screen.setAttribute('tabindex', '-1'); 
+                // Delay focus slightly to allow screen to become visible and animation to start
+                requestAnimationFrame(() => { 
+                    screen.focus();
+                    screenFocused = true;
+                 });
+            } else {
+                screen.removeAttribute('tabindex');
+            }
+        });
+        mainNavLinks.forEach(link => {
+            const isActive = link.dataset.screen === screenId;
+            link.classList.toggle('active-nav-link', isActive);
+            link.setAttribute('aria-current', isActive ? 'page' : 'false');
+        });
+
+        // Close mobile sidebar if open and a screen link was clicked
+        if (window.innerWidth <= 768 && appSidebar.classList.contains('app-sidebar--open')) {
+            appSidebar.classList.remove('app-sidebar--open');
+            if(mobileMenuToggleBtn) mobileMenuToggleBtn.setAttribute('aria-expanded', 'false');
+            document.body.classList.remove('sidebar-open');
+        }
+        // Fallback focus to main workspace if screen focus failed (e.g. screen hidden too quickly)
+        if (!screenFocused && mainWorkspaceEl) {
+            mainWorkspaceEl.focus();
+        }
+    }
+
+    allScreenChangeLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const screenId = link.dataset.screenLink || link.dataset.screen;
+            if (screenId) showScreen(screenId);
+        });
+    });
+    
+    if (mobileMenuToggleBtn && appSidebar) {
+        mobileMenuToggleBtn.addEventListener('click', () => {
+            const isOpen = appSidebar.classList.toggle('app-sidebar--open');
+            mobileMenuToggleBtn.setAttribute('aria-expanded', isOpen.toString());
+            document.body.classList.toggle('sidebar-open', isOpen);
+            if(isOpen) appSidebar.focus(); // Focus sidebar when opened
+        });
+    }
+    document.addEventListener('click', (event) => {
+        if (window.innerWidth <= 768 && appSidebar && appSidebar.classList.contains('app-sidebar--open')) {
+            if (!appSidebar.contains(event.target) && !mobileMenuToggleBtn.contains(event.target)) {
+                appSidebar.classList.remove('app-sidebar--open');
+                if(mobileMenuToggleBtn) mobileMenuToggleBtn.setAttribute('aria-expanded', 'false');
+                document.body.classList.remove('sidebar-open');
+            }
+        }
+    });
+
+
+    // --- Scriptorium Logic (condensed) ---
+    const cardTitleInput = document.getElementById('cardTitle');
+    const previewTitle = document.getElementById('previewTitle');
+    const metadataList = document.getElementById('metadataList');
+    const addMetadataBtn = document.getElementById('addMetadataBtn');
+    const previewMetadata = document.getElementById('previewMetadata');
+    const cardImageUpload = document.getElementById('cardImageUpload');
+    const editorImagePreview = document.getElementById('editorImagePreview');
+    const editorImagePlaceholder = document.getElementById('editorImagePlaceholder');
+    const previewImage = document.getElementById('previewImage'); /* This is an <img> inside a div */
+    const previewImageContainer = document.getElementById('previewImageContainer'); /* This is the div */
+    const previewImagePlaceholder = document.getElementById('previewImagePlaceholder');
+    const saveCardBtn = document.getElementById('saveCardBtn');
+    const clearFormBtn = document.getElementById('clearFormBtn');
+    const exportCardBtn = document.getElementById('exportCardBtn');
+    const cardTitleErrorEl = document.getElementById('cardTitleError');
+    const cardImageErrorEl = document.getElementById('cardImageError');
+
+    function validateAndPreviewScriptorium() { 
+        let isValid = true;
+        if (!cardTitleInput || !previewTitle || !metadataList || !previewMetadata) return true; 
+
+        if (cardTitleInput.value.trim() === '') {
+            if(cardTitleErrorEl) cardTitleErrorEl.textContent = 'Card title cannot be empty.';
+            cardTitleInput.classList.add('input-error'); isValid = false;
+        } else { if(cardTitleErrorEl) cardTitleErrorEl.textContent = ''; cardTitleInput.classList.remove('input-error'); }
+        previewTitle.textContent = cardTitleInput.value.trim() || 'Arcane Hexstone';
+
+        previewMetadata.innerHTML = '';
+        const items = metadataList.querySelectorAll('.metadata-item');
+        items.forEach((item) => {
+            const keyInput = item.querySelector('.metadata-key');
+            const valueInput = item.querySelector('.metadata-value');
+            const key = keyInput.value.trim();
+            const value = valueInput.value.trim();
+            if (key) {
+                const div = document.createElement('div');
+                div.className = 'card-metadata-item-preview';
+                div.innerHTML = `<span>${key}</span><span>${value || 'N/A'}</span>`;
+                previewMetadata.appendChild(div);
+            }
+        });
+        return isValid;
+    }
+    function populateInitialScriptoriumPreview() { 
+        if (!previewTitle || !previewMetadata) return;
+        previewTitle.textContent = "Arcane Hexstone";
+        previewMetadata.innerHTML = `
+            <div class="card-metadata-item-preview"><span>Type</span><span>Artifact</span></div>
+            <div class="card-metadata-item-preview"><span>Rarity</span><span>Rare</span></div>
+            <div class="card-metadata-item-preview"><span>Effect</span><span>Grants +2 to wisdom checks</span></div>
+            <div class="card-metadata-item-preview"><span>Creator</span><span>Mage Council</span></div>
+        `;
+         if(previewImageContainer) previewImageContainer.style.backgroundImage = '';
+         if(previewImage) previewImage.style.display = 'none';
+         if(previewImagePlaceholder) previewImagePlaceholder.style.display = 'block';
+
+         if(editorImagePreviewContainer) editorImagePreviewContainer.style.backgroundImage = '';
+         if(editorImagePreview) editorImagePreview.style.display = 'none';
+         if(editorImagePlaceholder) editorImagePlaceholder.style.display = 'block';
+    }
+    if (cardTitleInput) cardTitleInput.addEventListener('input', validateAndPreviewScriptorium);
+    if (metadataList) metadataList.addEventListener('input', validateAndPreviewScriptorium);
+    if (addMetadataBtn) { 
+        addMetadataBtn.addEventListener('click', () => {
+            const itemCount = metadataList.children.length;
+            const newItem = document.createElement('div');
+            newItem.className = 'metadata-item';
+            newItem.innerHTML = `
+                <label for="metaKey${itemCount}" class="hidden-visually">Property Name ${itemCount +1}</label>
+                <input type="text" id="metaKey${itemCount}" class="form-control metadata-key" placeholder="Property Name" aria-describedby="metaKeyError${itemCount}">
+                <label for="metaValue${itemCount}" class="hidden-visually">Property Value ${itemCount + 1}</label>
+                <input type="text" id="metaValue${itemCount}" class="form-control metadata-value" placeholder="Property Value" aria-describedby="metaValueError${itemCount}">
+                <button type="button" class="btn btn--danger btn--icon remove-metadata-btn" aria-label="Remove this property">&times;</button>
+                <p id="metaKeyError${itemCount}" class="error-message-text metadata-error" style="grid-column: 1;"></p>
+            `; 
+            metadataList.appendChild(newItem);
+            newItem.querySelector('.remove-metadata-btn').addEventListener('click', function() { this.parentElement.remove(); validateAndPreviewScriptorium(); });
+            newItem.querySelector('.metadata-key').focus();
+        });
+    }
+    metadataList.querySelectorAll('.remove-metadata-btn').forEach(btn => { btn.addEventListener('click', function() { this.parentElement.remove(); validateAndPreviewScriptorium(); }); });
+    if (cardImageUpload) { 
+        cardImageUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (!file.type.startsWith('image/')){ if(cardImageErrorEl) cardImageErrorEl.textContent = "Invalid file type."; cardImageUpload.classList.add('input-error'); return; }
+                if (file.size > 5 * 1024 * 1024) { if(cardImageErrorEl) cardImageErrorEl.textContent = "File too large (max 5MB)."; cardImageUpload.classList.add('input-error'); return; }
+                if(cardImageErrorEl) cardImageErrorEl.textContent = ""; cardImageUpload.classList.remove('input-error');
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const imageUrl = event.target.result;
+                    if(previewImageContainer) {
+                        previewImageContainer.style.backgroundImage = `url('${imageUrl}')`;
+                        previewImageContainer.style.backgroundSize = 'cover';
+                        previewImageContainer.style.backgroundPosition = 'center';
+                    }
+                    if(previewImage) previewImage.style.display = 'none'; 
+                    if(previewImagePlaceholder) previewImagePlaceholder.style.display = 'none';
+                    
+                    if(editorImagePreviewContainer) {
+                        editorImagePreviewContainer.style.backgroundImage = `url('${imageUrl}')`;
+                        editorImagePreviewContainer.style.backgroundSize = 'cover';
+                        editorImagePreviewContainer.style.backgroundPosition = 'center';
+                    }
+                    if(editorImagePreview) editorImagePreview.style.display = 'none';
+                    if(editorImagePlaceholder) editorImagePlaceholder.style.display = 'none';
+
+                    const imageToCrop = document.getElementById('imageToCrop');
+                    if (imageToCrop) imageToCrop.src = imageUrl; // This will trigger its own onload
+                }
+                reader.readAsDataURL(file);
+            } else { /* Reset previews */ 
+                if(previewImageContainer) previewImageContainer.style.backgroundImage = '';
+                if(previewImage) previewImage.style.display = 'none';
+                if(previewImagePlaceholder) previewImagePlaceholder.style.display = 'block';
+                if(editorImagePreviewContainer) editorImagePreviewContainer.style.backgroundImage = '';
+                if(editorImagePreview) editorImagePreview.style.display = 'none';
+                if(editorImagePlaceholder) editorImagePlaceholder.style.display = 'block';
+            }
+        });
+    }
+    if (clearFormBtn) { 
+        clearFormBtn.addEventListener('click', () => {
+            if(document.getElementById('cardForm')) document.getElementById('cardForm').reset();
+            // Clear dynamic metadata and add one empty row
+            metadataList.innerHTML = `
+                <div class="metadata-item">
+                    <label for="metaKeyNew" class="hidden-visually">Property Name New</label>
+                    <input type="text" id="metaKeyNew" class="form-control metadata-key" placeholder="Property Name">
+                    <label for="metaValueNew" class="hidden-visually">Property Value New</label>
+                    <input type="text" id="metaValueNew" class="form-control metadata-value" placeholder="Property Value">
+                    <button type="button" class="btn btn--danger btn--icon remove-metadata-btn" aria-label="Remove this property">&times;</button>
+                </div>`;
+            metadataList.querySelector('.remove-metadata-btn').addEventListener('click', function() { this.parentElement.remove(); validateAndPreviewScriptorium(); });
+            
+            if(previewImageContainer) previewImageContainer.style.backgroundImage = '';
+            if(previewImage) previewImage.style.display = 'none';
+            if(previewImagePlaceholder) previewImagePlaceholder.style.display = 'block';
+            if(editorImagePreviewContainer) editorImagePreviewContainer.style.backgroundImage = '';
+            if(editorImagePreview) editorImagePreview.style.display = 'none';
+            if(editorImagePlaceholder) editorImagePlaceholder.style.display = 'block';
+
+            const imageToCrop = document.getElementById('imageToCrop');
+            if (imageToCrop) imageToCrop.src = 'https://placehold.co/600x450/2C2C44/B0B0B0?text=Upload+Image+to+Crop';
+            
+            if(cardTitleErrorEl) cardTitleErrorEl.textContent = ""; cardTitleInput.classList.remove('input-error');
+            if(cardImageErrorEl) cardImageErrorEl.textContent = ""; cardImageUpload.classList.remove('input-error');
+            populateInitialScriptoriumPreview();
+        });
+    }
+    if(saveCardBtn) { 
+        saveCardBtn.addEventListener('click', () => {
+            if(validateAndPreviewScriptorium()) alert("Card data valid and would be saved!");
+            else alert("Please correct form errors.");
+        });
+    }
+    if(exportCardBtn) exportCardBtn.addEventListener('click', () => alert("Export Card (Scriptorium) to be implemented."));
+
+    // --- Visage Shaper Logic (Simplified) ---
+    const imageToCrop = document.getElementById('imageToCrop');
+    const cropOverlay = document.getElementById('cropOverlay');
+    const zoomSlider = document.getElementById('zoomSlider');
+    const cropResultPreview = document.getElementById('cropResultPreview');
+    const applyCropBtn = document.getElementById('applyCropBtn');
+    let currentZoom = 1, imageOriginalWidth, imageOriginalHeight, isDragging = false, startX, startY, initialOverlayX, initialOverlayY;
+
+    function updateCropResultPreview() { 
+        if (!imageToCrop || !cropOverlay || !cropResultPreview || !imageToCrop.complete || imageToCrop.naturalWidth === 0) return;
+        const imgContainerRect = imageToCrop.parentElement.getBoundingClientRect();
+        const imgCurrentRect = imageToCrop.getBoundingClientRect(); 
+        const overlayRect = cropOverlay.getBoundingClientRect();
+        const overlayXInContainer = overlayRect.left - imgContainerRect.left;
+        const overlayYInContainer = overlayRect.top - imgContainerRect.top;
+        const imgXInContainer = imgCurrentRect.left - imgContainerRect.left;
+        const imgYInContainer = imgCurrentRect.top - imgContainerRect.top;
+        const cropX = (overlayXInContainer - imgXInContainer) / currentZoom;
+        const cropY = (overlayYInContainer - imgYInContainer) / currentZoom;
+        const cropWidth = overlayRect.width / currentZoom;
+        const cropHeight = overlayRect.height / currentZoom;
+        cropResultPreview.style.backgroundImage = `url('${imageToCrop.src}')`;
+        const previewContainerWidth = cropResultPreview.offsetWidth;
+        const scaleFactor = previewContainerWidth / cropWidth;
+        cropResultPreview.style.backgroundSize = `${imageOriginalWidth * scaleFactor}px ${imageOriginalHeight * scaleFactor}px`;
+        cropResultPreview.style.backgroundPosition = `-${cropX * scaleFactor}px -${cropY * scaleFactor}px`;
+    }
+    if (imageToCrop) { imageToCrop.onload = () => { 
+        imageOriginalWidth = imageToCrop.naturalWidth; imageOriginalHeight = imageToCrop.naturalHeight; currentZoom = 1; 
+        if(zoomSlider) zoomSlider.value = 100; imageToCrop.style.transform = `scale(1) translate(0,0)`; 
+        if(cropOverlay && imageToCrop.parentElement) {
+            const cW = imageToCrop.parentElement.offsetWidth; const cH = imageToCrop.parentElement.offsetHeight;
+            let oW = Math.min(cW, imageOriginalWidth * currentZoom) * 0.6; let oH = oW * 1.15;
+            if (oH > cH * 0.9) { oH = cH * 0.9; oW = oH / 1.15; }
+            if (oW > cW * 0.9) { oW = cW * 0.9; oH = oW * 1.15; }
+            cropOverlay.style.width = `${oW}px`; cropOverlay.style.height = `${oH}px`;
+            cropOverlay.style.left = `${(cW - oW) / 2}px`; cropOverlay.style.top = `${(cH - oH) / 2}px`;
+        }
+        updateCropResultPreview();
+    }; if (imageToCrop.complete && imageToCrop.naturalWidth > 0) imageToCrop.onload(); }
+    if (cropOverlay) { 
+        cropOverlay.addEventListener('mousedown', (e) => { isDragging = true; startX = e.clientX; startY = e.clientY; initialOverlayX = cropOverlay.offsetLeft; initialOverlayY = cropOverlay.offsetTop; cropOverlay.style.cursor = 'grabbing'; e.preventDefault(); });
+        document.addEventListener('mousemove', (e) => { if (!isDragging) return; const dx = e.clientX - startX; const dy = e.clientY - startY; let newX = initialOverlayX + dx; let newY = initialOverlayY + dy; const maxX = imageToCrop.parentElement.offsetWidth - cropOverlay.offsetWidth; const maxY = imageToCrop.parentElement.offsetHeight - cropOverlay.offsetHeight; newX = Math.max(0, Math.min(newX, maxX)); newY = Math.max(0, Math.min(newY, maxY)); cropOverlay.style.left = `${newX}px`; cropOverlay.style.top = `${newY}px`; updateCropResultPreview(); });
+        document.addEventListener('mouseup', () => { if (isDragging) { isDragging = false; cropOverlay.style.cursor = 'move'; } });
+    }
+    if (zoomSlider) { 
+        zoomSlider.addEventListener('input', () => { currentZoom = parseFloat(zoomSlider.value) / 100; imageToCrop.style.transformOrigin = 'center center'; imageToCrop.style.transform = `scale(${currentZoom})`; updateCropResultPreview(); });
+    }
+    if(applyCropBtn) { 
+        applyCropBtn.addEventListener('click', () => {
+            if (previewImageContainer && cropResultPreview.style.backgroundImage && imageToCrop.src !== '#' && !imageToCrop.src.includes('placehold.co')) {
+                previewImageContainer.style.backgroundImage = cropResultPreview.style.backgroundImage;
+                previewImageContainer.style.backgroundSize = cropResultPreview.style.backgroundSize;
+                previewImageContainer.style.backgroundPosition = cropResultPreview.style.backgroundPosition;
+                if(previewImage) previewImage.style.display = 'none'; 
+                if(previewImagePlaceholder) previewImagePlaceholder.style.display = 'none';
+                
+                if (editorImagePreviewContainer) { 
+                    editorImagePreviewContainer.style.backgroundImage = cropResultPreview.style.backgroundImage;
+                    editorImagePreviewContainer.style.backgroundSize = cropResultPreview.style.backgroundSize;
+                    editorImagePreviewContainer.style.backgroundPosition = cropResultPreview.style.backgroundPosition;
+                    if(editorImagePreview) editorImagePreview.style.display = 'none';
+                    if(editorImagePlaceholder) editorImagePlaceholder.style.display = 'none';
+                }
+                alert("Crop applied to Scriptorium preview.");
+            } else { alert("No image or crop data to apply."); }
+            showScreen('scriptorium'); 
+        });
+    }
+
+
+    // --- Obsidian Library Logic ---
+    const libraryCardGrid = document.getElementById('libraryCardGrid');
+    const librarySearchInput = document.getElementById('librarySearchInput');
+    const prevPageBtn = document.getElementById('prevPageBtn');
+    const nextPageBtn = document.getElementById('nextPageBtn');
+    const paginationInfo = document.getElementById('paginationInfo');
+    const pageNumbersContainer = document.getElementById('pageNumbersContainer');
+    const emptyLibraryMessage = document.querySelector('#obsidian-library .empty-library-message');
+    const viewToggleBtn = document.getElementById('viewToggleBtn');
+    let libraryViewMode = 'grid'; // 'grid' or 'list'
+
+    const ITEMS_PER_PAGE = 10; // Adjust as needed
+    let currentPage = 1;
+    let allLibraryCards = []; // This will hold all card data for the library
+
+    // Sample data for Obsidian Library
+    function generateSampleLibraryCards() {
+        const types = ["Artifact", "Spell", "Creature", "Enchantment", "Relic", "Trap"];
+        const rarities = ["Common", "Uncommon", "Rare", "Mythic", "Legendary"];
+        for (let i = 1; i <= 25; i++) { // Create 25 sample cards
+            allLibraryCards.push({
+                id: `libCard${i}`,
+                title: `Ancient Scroll ${i}`,
+                type: types[i % types.length],
+                rarity: rarities[i % rarities.length],
+                imgSrc: `https://placehold.co/180x207/${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}/E0E0E0?text=AS${i}&font=Inter`,
+                dateCreated: `2023-10-${String(i).padStart(2,'0')}`
+            });
+        }
+    }
+
+    function getCardTypeIndicatorClass(type) {
+        switch(type.toLowerCase()){
+            case 'artifact': return 'type-artifact'; // Bronze
+            case 'spell': return 'type-spell'; // Purple-ish
+            case 'creature': return 'type-creature'; // Green
+            default: return 'bg-gray-500'; // Default
+        }
+    }
+
+    function renderLibraryCards(cardsToDisplay) {
+        if (!libraryCardGrid || !emptyLibraryMessage) return;
+        libraryCardGrid.innerHTML = ''; // Clear previous cards
+        
+        if (cardsToDisplay.length === 0) {
+            emptyLibraryMessage.classList.remove('hidden');
+            return;
+        }
+        emptyLibraryMessage.classList.add('hidden');
+
+        cardsToDisplay.forEach(card => {
+            const cardItem = document.createElement('div');
+            cardItem.className = `library-card-item hex-card-shape ${libraryViewMode === 'list' ? 'list-view' : ''}`; // Add list-view class if needed
+            cardItem.tabIndex = 0;
+            cardItem.dataset.cardId = card.id;
+            cardItem.setAttribute('aria-label', `Card: ${card.title}, Type: ${card.type}`);
+            
+            // Simplified for grid view. List view would have different structure.
+            cardItem.innerHTML = `
+                <span class="library-card-item__type-indicator ${getCardTypeIndicatorClass(card.type)}" title="${card.type}">${card.type.substring(0,1).toUpperCase()}</span>
+                <div class="library-card-item__thumbnail hex-card-shape">
+                    <img src="${card.imgSrc}" alt="${card.title}">
+                </div>
+                <div class="library-card-item__info">
+                    <h4 class="library-card-item__title">${card.title}</h4>
+                    <p class="library-card-item__type">Created: ${card.dateCreated}</p>
+                </div>
+                <div class="library-card-item__hover-actions">
+                    <button class="btn btn--icon" aria-label="Edit ${card.title}" data-action="edit"><i class="fas fa-pencil-alt"></i></button>
+                    <button class="btn btn--icon btn--danger" aria-label="Delete ${card.title}" data-action="delete"><i class="fas fa-trash"></i></button>
+                    <button class="btn btn--icon" aria-label="Export ${card.title}" data-action="export"><i class="fas fa-file-export"></i></button>
+                </div>
+            `;
+            // Event listeners for hover actions
+            cardItem.querySelector('[data-action="edit"]').addEventListener('click', (e) => { e.stopPropagation(); showScreen('scriptorium'); /* Load card data */ });
+            cardItem.querySelector('[data-action="delete"]').addEventListener('click', (e) => { e.stopPropagation(); if(confirm(`Delete ${card.title}?`)) { /* Delete logic */ } });
+            cardItem.querySelector('[data-action="export"]').addEventListener('click', (e) => { e.stopPropagation(); alert(`Exporting ${card.title}`); });
+            
+            cardItem.addEventListener('click', () => cardItem.classList.toggle('selected')); // Basic selection toggle
+
+            libraryCardGrid.appendChild(cardItem);
+        });
+    }
+
+    function setupPagination(totalItems, itemsPerPage, currentPageToSet) {
+        if (!paginationInfo || !prevPageBtn || !nextPageBtn || !pageNumbersContainer) return;
+        
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        currentPage = Math.max(1, Math.min(currentPageToSet, totalPages)); // Ensure current page is valid
+
+        const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+        const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+        paginationInfo.textContent = `Showing ${startItem}-${endItem} of ${totalItems} cards`;
+
+        prevPageBtn.disabled = currentPage === 1;
+        nextPageBtn.disabled = currentPage === totalPages || totalItems === 0;
+
+        // Page numbers (simplified)
+        pageNumbersContainer.innerHTML = ''; // Clear old page numbers
+        const MAX_VISIBLE_PAGES = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(MAX_VISIBLE_PAGES / 2));
+        let endPage = Math.min(totalPages, startPage + MAX_VISIBLE_PAGES - 1);
+        if (endPage - startPage + 1 < MAX_VISIBLE_PAGES && totalPages >= MAX_VISIBLE_PAGES) {
+            startPage = Math.max(1, endPage - MAX_VISIBLE_PAGES + 1);
+        }
+
+
+        if (startPage > 1) {
+            const firstBtn = document.createElement('button');
+            firstBtn.textContent = '1';
+            firstBtn.className = 'btn btn--icon btn-neutral';
+            firstBtn.addEventListener('click', () => displayLibraryPage(1));
+            pageNumbersContainer.appendChild(firstBtn);
+            if (startPage > 2) pageNumbersContainer.appendChild(document.createTextNode('... '));
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            const pageBtn = document.createElement('button');
+            pageBtn.textContent = i;
+            pageBtn.className = 'btn btn--icon btn-neutral';
+            if (i === currentPage) {
+                pageBtn.classList.add('current-page');
+                pageBtn.setAttribute('aria-current', 'page');
+            }
+            pageBtn.addEventListener('click', () => displayLibraryPage(i));
+            pageNumbersContainer.appendChild(pageBtn);
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) pageNumbersContainer.appendChild(document.createTextNode(' ...'));
+            const lastBtn = document.createElement('button');
+            lastBtn.textContent = totalPages;
+            lastBtn.className = 'btn btn--icon btn-neutral';
+            lastBtn.addEventListener('click', () => displayLibraryPage(totalPages));
+            pageNumbersContainer.appendChild(lastBtn);
+        }
+    }
+
+    function displayLibraryPage(pageNumber) {
+        currentPage = pageNumber;
+        const searchTerm = librarySearchInput.value.toLowerCase();
+        const filteredCards = allLibraryCards.filter(card => 
+            card.title.toLowerCase().includes(searchTerm) ||
+            card.type.toLowerCase().includes(searchTerm)
+        );
+        
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        renderLibraryCards(filteredCards.slice(startIndex, endIndex));
+        setupPagination(filteredCards.length, ITEMS_PER_PAGE, currentPage);
+    }
+
+    if (librarySearchInput) {
+        librarySearchInput.addEventListener('input', () => {
+            displayLibraryPage(1); // Reset to first page on new search
+        });
+    }
+    if (prevPageBtn) prevPageBtn.addEventListener('click', () => { if (currentPage > 1) displayLibraryPage(currentPage - 1); });
+    if (nextPageBtn) nextPageBtn.addEventListener('click', () => { displayLibraryPage(currentPage + 1); });
+    
+    if (viewToggleBtn) {
+        viewToggleBtn.addEventListener('click', () => {
+            libraryViewMode = libraryViewMode === 'grid' ? 'list' : 'grid';
+            const icon = viewToggleBtn.querySelector('i.fas');
+            const text = viewToggleBtn.querySelector('.view-mode-text');
+            if (libraryViewMode === 'list') {
+                if(icon) icon.classList.replace('fa-list', 'fa-th-large');
+                if(text) text.textContent = 'Grid View';
+                if(libraryCardGrid) libraryCardGrid.classList.add('list-view-active'); // Add class for list specific styling (not fully implemented)
+            } else {
+                if(icon) icon.classList.replace('fa-th-large', 'fa-list');
+                if(text) text.textContent = 'List View';
+                if(libraryCardGrid) libraryCardGrid.classList.remove('list-view-active');
+            }
+            displayLibraryPage(currentPage); // Re-render with new view mode
+        });
+    }
+
+
+    // --- Collection Forge Logic (condensed) ---
+    const packCardListEl = document.getElementById('packCardList');
+    const selectedCardsCountEl = document.getElementById('selectedCardsCount');
+    const miniPreviewCountEl = document.getElementById('miniPreviewCount');
+    const selectedCardsMiniPreviewEl = document.getElementById('selectedCardsMiniPreview');
+    const selectAllCardsBtn = document.getElementById('selectAllCardsBtn');
+    const clearSelectedCardsBtn = document.getElementById('clearSelectedCardsBtn');
+    const packNameInput = document.getElementById('packName');
+    const packNameErrorEl = document.getElementById('packNameError');
+    const createPackBtn = document.getElementById('createPackBtn');
+    const packCardSearchInput = document.getElementById('packCardSearch');
+    let availableCardsData = []; 
+    let selectedPackCards = new Set(); 
+
+    const sampleCollectionCards = Array.from({length: 15}, (_, i) => ({ id: `card${i+1}`, title: `Mystic Relic ${i+1}`, type: ['Spell', 'Artifact', 'Creature', 'Enchantment', 'Land'][i % 5], rarity: ['Common', 'Uncommon', 'Rare', 'Mythic'][i % 4], imgSrc: `https://placehold.co/60x69/${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}/E0E0E0?text=C${i+1}&font=Inter` }));
+    availableCardsData = sampleCollectionCards;
+
+    function renderPackCardList(cardsToRender = availableCardsData) { /* ... Collection Forge render logic ... */ 
+        if (!packCardListEl) return;
+        packCardListEl.innerHTML = ''; 
+        cardsToRender.forEach(card => {
+            const listItem = document.createElement('div');
+            listItem.className = 'card-list-item'; listItem.tabIndex = 0; listItem.dataset.cardId = card.id;
+            if (selectedPackCards.has(card.id)) listItem.classList.add('selected');
+            listItem.innerHTML = `<div class="list-thumbnail hex-card-shape"><img src="${card.imgSrc}" alt="${card.title}"></div> <div class="list-item-info"><h4>${card.title}</h4><p>${card.type}, ${card.rarity}</p></div> <input type="checkbox" class="list-checkbox" aria-label="Select ${card.title}" ${selectedPackCards.has(card.id) ? 'checked' : ''}>`;
+            packCardListEl.appendChild(listItem);
+        });
+        updateSelectedCountAndPreview();
+    }
+    function updateSelectedCountAndPreview() { /* ... Collection Forge count & mini preview ... */ 
+        if (selectedCardsCountEl) selectedCardsCountEl.innerHTML = `<strong>${selectedPackCards.size}</strong> cards selected`;
+        if (miniPreviewCountEl) miniPreviewCountEl.textContent = selectedPackCards.size;
+        if (selectedCardsMiniPreviewEl) {
+            selectedCardsMiniPreviewEl.innerHTML = ''; let count = 0;
+            selectedPackCards.forEach(cardId => {
+                if (count < 5) { 
+                    const cardData = availableCardsData.find(c => c.id === cardId);
+                    if (cardData) {
+                        const miniHex = document.createElement('div'); miniHex.className = 'mini-preview-hex hex-card-shape'; miniHex.title = cardData.title;
+                        miniHex.style.backgroundImage = `url('${cardData.imgSrc}')`; miniHex.style.backgroundSize = 'cover'; miniHex.style.backgroundPosition = 'center';
+                        selectedCardsMiniPreviewEl.appendChild(miniHex);
+                    } count++;
+                }
+            });
+            if (selectedPackCards.size > 5) { const more = document.createElement('div'); more.className = 'mini-preview-hex hex-card-shape'; more.textContent = `+${selectedPackCards.size - 5}`; more.style.cssText = 'align-items:center;justify-content:center;font-size:0.8rem;'; selectedCardsMiniPreviewEl.appendChild(more); }
+        }
+    }
+    if (packCardListEl) { packCardListEl.addEventListener('click', (e) => { /* ... Collection Forge selection toggle ... */ 
+        const listItem = e.target.closest('.card-list-item'); if (!listItem) return;
+        const cardId = listItem.dataset.cardId; const checkbox = listItem.querySelector('.list-checkbox');
+        if (selectedPackCards.has(cardId)) { selectedPackCards.delete(cardId); listItem.classList.remove('selected'); if(checkbox) checkbox.checked = false; }
+        else { selectedPackCards.add(cardId); listItem.classList.add('selected'); if(checkbox) checkbox.checked = true; }
+        updateSelectedCountAndPreview();
+    }); }
+    if (selectAllCardsBtn) { selectAllCardsBtn.addEventListener('click', () => { /* ... Collection Forge select all ... */ 
+        const currentFilter = packCardSearchInput ? packCardSearchInput.value : '';
+        const cardsToSelect = filterCardsForPack(currentFilter);
+        cardsToSelect.forEach(card => selectedPackCards.add(card.id));
+        renderPackCardList(cardsToSelect);
+    }); }
+    if (clearSelectedCardsBtn) { clearSelectedCardsBtn.addEventListener('click', () => { /* ... Collection Forge clear all ... */ 
+        selectedPackCards.clear(); 
+        const currentFilter = packCardSearchInput ? packCardSearchInput.value : '';
+        renderPackCardList(filterCardsForPack(currentFilter));
+    }); }
+    function filterCardsForPack(searchTerm) { const lower = searchTerm.toLowerCase(); return availableCardsData.filter(c => c.title.toLowerCase().includes(lower) || c.type.toLowerCase().includes(lower) || c.rarity.toLowerCase().includes(lower)); }
+    if (packCardSearchInput) { packCardSearchInput.addEventListener('input', () => { renderPackCardList(filterCardsForPack(packCardSearchInput.value)); }); }
+    if (createPackBtn) { createPackBtn.addEventListener('click', () => { /* ... Collection Forge create pack validation ... */ 
+        let isValid = true; if(packNameInput.value.trim() === '') { if(packNameErrorEl) packNameErrorEl.textContent = "Pack name required."; packNameInput.classList.add('input-error'); isValid = false; }
+        else { if(packNameErrorEl) packNameErrorEl.textContent = ""; packNameInput.classList.remove('input-error');}
+        if(selectedPackCards.size === 0) { alert("Select at least one card."); isValid = false; }
+        if(isValid) alert("Pack created (logged to console).");
+    }); }
+    
+    // Initial Setup
+    generateSampleLibraryCards(); // Populate library data
+    displayLibraryPage(1); // Display first page of library
+    renderPackCardList(); // Render initial list for pack creation
+    populateInitialScriptoriumPreview(); 
+    validateAndPreviewScriptorium(); 
+    
+    // Set Obsidian Library as default active screen
+    showScreen('obsidian-library'); 
+
+});
+</script>
+</body>
+</html>

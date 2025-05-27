@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hex Card Forge - GUI Prototype</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           CSS Variables & Global Styles
+           ============================================ */
+        :root {
+            /* Main Color Palette */
+            --primary-purple: #4A0072; /* Rich Byzantine Purple */
+            --primary-purple-dark: #3A005A;
+            --primary-purple-light: #5C4077;
+            
+            --secondary-gold: #DAA520; /* Goldenrod */
+            --secondary-gold-dark: #B8860B;
+            --secondary-gold-light: #FFDB58;
+            
+            /* Background & Content Areas */
+            --background-dark: #1A1A2E; /* Dark Imperial Blue */
+            --content-area-dark: #252538;
+            --content-area-medium: #2C2C44;
+            --border-divider: #404058;
+            
+            /* Text Colors */
+            --text-light: #E0E0E0; /* Light Gray/Off-white */
+            --text-medium: #B0B0B0; /* Medium Gray */
+            --text-dark: #1A1A2E; /* For text on lighter backgrounds */
+            
+            /* Effects */
+            --shadow-soft: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 6px 12px rgba(0, 0, 0, 0.15);
+            --shadow-large: 0 10px 20px rgba(0, 0, 0, 0.2);
+            
+            /* Transitions */
+            --transition-standard: all 0.3s ease;
+        }
+
+        /* Base Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Hexagonal Background Pattern */
+        .hex-pattern-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='69' viewBox='0 0 60 69' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0L58.7846 17.25V51.75L30 69L1.21539 51.75V17.25L30 0Z' fill='%23DAA520'/%3E%3C/svg%3E");
+            background-size: 80px 92px;
+            background-repeat: repeat;
+        }
+
+        /* Animated Hexagonal Background for Gateway */
+        .hex-bg-animated {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .hex-bg-animated::before,
+        .hex-bg-animated::after {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='115' viewBox='0 0 100 115' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0L93.3013 28.75V86.25L50 115L6.69873 86.25V28.75L50 0Z' fill='%23DAA520'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 100px 115px;
+            animation: hex-emanate 25s linear infinite;
+            opacity: 0;
+        }
+
+        .hex-bg-animated::after {
+            animation-delay: -12.5s;
+            background-image: url("data:image/svg+xml,%3Csvg width='120' height='138' viewBox='0 0 100 115' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0L93.3013 28.75V86.25L50 115L6.69873 86.25V28.75L50 0Z' fill='%235C4077'/%3E%3C/svg%3E");
+            background-size: 120px 138px;
+        }
+
+        @keyframes hex-emanate {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { opacity: 0.05; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        /* Hexagon Shape Classes */
+        .hex-shape {
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
+
+        .hex-button {
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+            transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+        }
+
+        .hex-button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Common Layout Components */
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .screen {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: -10px;
+        }
+
+        .col {
+            flex: 1;
+            padding: 10px;
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0.5em;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+        }
+
+        h3 {
+            font-size: 1.75rem;
+        }
+
+        h4 {
+            font-size: 1.5rem;
+        }
+
+        h5 {
+            font-size: 1.25rem;
+        }
+
+        h6 {
+            font-size: 1rem;
+        }
+
+        .text-gold {
+            color: var(--secondary-gold);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--primary-purple);
+            color: var(--text-light);
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--transition-standard);
+        }
+
+        .btn:hover {
+            background-color: var(--primary-purple-dark);
+        }
+
+        .btn-gold {
+            background-color: var(--secondary-gold);
+            color: var(--text-dark);
+        }
+
+        .btn-gold:hover {
+            background-color: var(--secondary-gold-dark);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            background-color: var(--content-area-dark);
+            border: 1px solid var(--border-divider);
+            border-radius: 4px;
+            color: var(--text-light);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--secondary-gold);
+        }
+
+        /* Card Elements */
+        .card {
+            background-color: var(--content-area-medium);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            background-color: var(--primary-purple);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            margin: 0;
+            color: var(--text-light);
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* Navigation */
+        .navbar {
+            background-color: var(--primary-purple);
+            padding: 12px 0;
+            box-shadow: var(--shadow-medium);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .navbar-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-light);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--secondary-gold);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-link {
+            margin-left: 20px;
+            color: var(--text-light);
+            text-decoration: none;
+            transition: var(--transition-standard);
+        }
+
+        .nav-link:hover {
+            color: var(--secondary-gold);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1200px) {
+            .container {
+                max-width: 1140px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .container {
+                max-width: 960px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                max-width: 720px;
+            }
+            
+            .row {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container {
+                max-width: 540px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h2 {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar (hidden on Gateway screen) -->
+    <nav class="navbar" id="main-navbar" style="display: none;">
+        <div class="container navbar-content">
+            <a href="#" class="logo">CARD <span>FORGE</span></a>
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link" data-screen="gateway">Home</a></li>
+                <li><a href="#" class="nav-link" data-screen="scriptorium">Editor</a></li>
+                <li><a href="#" class="nav-link" data-screen="visage-shaper">Image Tool</a></li>
+                <li><a href="#" class="nav-link" data-screen="obsidian-library">Library</a></li>
+                <li><a href="#" class="nav-link" data-screen="collection-forge">Packs</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Screen Container -->
+    <div id="screen-container">
+        <!-- Each screen will be implemented separately -->
+        <div id="gateway" class="screen active">
+            <!-- The Gateway (Title Screen) content will go here -->
+            <div class="placeholder" style="height: 100vh; display: flex; justify-content: center; align-items: center;">
+                <h1>The Gateway screen will be implemented next</h1>
+            </div>
+        </div>
+        
+        <div id="scriptorium" class="screen">
+            <!-- The Scriptorium (Card Editor) content will go here -->
+        </div>
+        
+        <div id="visage-shaper" class="screen">
+            <!-- The Visage Shaper (Image Cropping Tool) content will go here -->
+        </div>
+        
+        <div id="obsidian-library" class="screen">
+            <!-- The Obsidian Library (Card Management) content will go here -->
+        </div>
+        
+        <div id="collection-forge" class="screen">
+            <!-- The Collection Forge (Booster Pack) content will go here -->
+        </div>
+    </div>
+
+    <!-- Basic JavaScript for Screen Navigation -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Navigation functionality
+            const navLinks = document.querySelectorAll('.nav-link');
+            const screens = document.querySelectorAll('.screen');
+            const navbar = document.getElementById('main-navbar');
+            
+            // Function to show a specific screen
+            function showScreen(screenId) {
+                // Hide all screens
+                screens.forEach(screen => {
+                    screen.classList.remove('active');
+                });
+                
+                // Show the selected screen
+                const targetScreen = document.getElementById(screenId);
+                if (targetScreen) {
+                    targetScreen.classList.add('active');
+                    
+                    // Show/hide navbar based on current screen
+                    if (screenId === 'gateway') {
+                        navbar.style.display = 'none';
+                    } else {
+                        navbar.style.display = 'block';
+                    }
+                }
+            }
+            
+            // Add click handlers to navigation links
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetScreen = this.getAttribute('data-screen');
+                    showScreen(targetScreen);
+                });
+            });
+            
+            // Initialize with Gateway screen
+            showScreen('gateway');
+        });
+    </script>
+</body>
+</html>

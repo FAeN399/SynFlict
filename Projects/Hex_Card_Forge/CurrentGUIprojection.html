@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hex Card Forge - GUI Prototype</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4A0072;
+            --primary-dark: #3A005A;
+            --primary-light: #5C4077;
+            --secondary: #DAA520;
+            --secondary-dark: #B8860B;
+            --secondary-light: #F0C14C;
+            --background: #1A1A2E;
+            --bg-content: #252538;
+            --bg-content-light: #2C2C44;
+            --text-light: #E0E0E0;
+            --text-medium: #B0B0B0;
+            --text-dark-contrast: #1A1A2E; /* For text on gold buttons */
+            --border: #404058;
+            --border-focus: var(--secondary);
+            --focus-outline-width: 2px;
+            --focus-outline-offset: 1px;
+            --focus-glow-color: rgba(218, 165, 32, 0.4);
+            --spacing-unit: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            color: var(--text-light);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden; /* Prevent horizontal scroll from animations */
+        }
+
+        /* Visually Hidden (for accessibility) */
+        .hidden-visually {
+            border: 0;
+            clip: rect(0 0 0 0);
+            height: 1px;
+            margin: -1px;
+            overflow: hidden;
+            padding: 0;
+            position: absolute;
+            width: 1px;
+        }
+
+        /* Utility Classes */
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 calc(var(--spacing-unit) * 2.5); /* 20px */
+        }
+
+        .screen {
+            display: none; /* Initially hidden */
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            min-height: 100vh; /* Full viewport height */
+            width: 100%;
+            position: absolute; /* Overlay for transitions */
+            top: 0;
+            left: 0;
+            padding-top: 60px; /* Space for fixed header */
+        }
+
+        .screen.active {
+            display: block; /* Or flex/grid depending on content */
+            opacity: 1;
+            z-index: 1; /* Ensure active screen is on top */
+        }
+        
+        /* Focus State Styling */
+        *:focus-visible {
+            outline: var(--focus-outline-width) solid var(--border-focus) !important;
+            outline-offset: var(--focus-outline-offset) !important;
+            box-shadow: 0 0 0 calc(var(--focus-outline-width) + 2px) var(--focus-glow-color) !important;
+        }
+
+
+        .btn {
+            background-color: var(--primary);
+            color: var(--text-light);
+            border: none;
+            padding: calc(var(--spacing-unit) * 1.25) calc(var(--spacing-unit) * 2); /* 10px 16px */
+            border-radius: calc(var(--spacing-unit) * 0.5); /* 4px */
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s, transform 0.1s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: var(--text-dark-contrast); /* Dark text for gold button */
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--secondary-dark);
+        }
+        .btn-danger {
+            background-color: #991B1B; /* Tailwind red-800 */
+        }
+        .btn-danger:hover {
+             background-color: #7F1D1D; /* Tailwind red-900 */
+        }
+        .btn--icon {
+            padding: var(--spacing-unit);
+        }
+
+
+        /* Hexagon Shapes */
+        .hexagon-horizontal { /* For buttons or decorative elements */
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        }
+
+        .hex-card-shape { /* For actual cards, vertical hexagon */
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        }
+
+
+        /* Header Styles */
+        header {
+            background-color: var(--primary);
+            padding: calc(var(--spacing-unit) * 1.5) 0; /* 12px */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            position: fixed; /* Fixed header */
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 100; /* High z-index */
+        }
+
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem; /* 24px */
+            font-weight: 700;
+            color: var(--text-light);
+        }
+
+        .logo span {
+            color: var(--secondary);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav li {
+            margin-left: calc(var(--spacing-unit) * 2.5); /* 20px */
+        }
+
+        nav a {
+            color: var(--text-light);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+            padding: var(--spacing-unit) 0;
+        }
+
+        nav a:hover, nav a.active-nav-link {
+            color: var(--secondary);
+            border-bottom: 2px solid var(--secondary);
+        }
+
+        /* Gateway Screen */
+        #gateway {
+            background-color: var(--background);
+            position: relative; /* For z-index of hex-bg */
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: calc(var(--spacing-unit) * 5) 0; /* 40px */
+            text-align: center;
+        }
+
+        .hex-bg { /* Subtle animated background for Gateway */
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; /* Behind content */
+            opacity: 0.05; /* More subtle */
+            background-image:
+                radial-gradient(var(--primary-light) 1px, transparent 1px),
+                radial-gradient(var(--primary-light) 1px, transparent 1px);
+            background-size: 60px 60px, 60px 60px; /* Hexagonal pattern size */
+            background-position: 0 0, 30px 30px; /* Offset for hex grid */
+            animation: pulseBg 20s infinite linear;
+        }
+        @keyframes pulseBg {
+            0% { opacity: 0.03; transform: scale(1); }
+            50% { opacity: 0.07; transform: scale(1.05); }
+            100% { opacity: 0.03; transform: scale(1); }
+        }
+
+
+        .title-section { /* Renamed from .title for clarity */
+            margin-bottom: calc(var(--spacing-unit) * 7.5); /* 60px */
+            text-align: center;
+            transform: translateY(-30px);
+            opacity: 0;
+            animation: fade-in-up 0.8s 0.2s forwards cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: relative; /* For z-index */
+            z-index: 2;
+        }
+
+        @keyframes fade-in-up {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .title-section h1 {
+            font-size: clamp(2.5rem, 6vw, 4rem); /* Responsive font size */
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--text-light);
+        }
+
+        .title-section span {
+            color: var(--secondary);
+        }
+        .title-section p {
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
+            color: var(--text-medium);
+            margin-top: var(--spacing-unit);
+        }
+
+        .hex-menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Responsive columns */
+            gap: calc(var(--spacing-unit) * 3); /* 24px */
+            width: 100%;
+            max-width: 1100px;
+            padding: 0 calc(var(--spacing-unit) * 2.5); /* 20px */
+            position: relative; /* For z-index */
+            z-index: 2;
+        }
+
+        .menu-option {
+            background-color: var(--primary);
+            width: 100%; /* Fill grid cell */
+            aspect-ratio: 1 / 1.15; /* For vertical hexagon shape */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: calc(var(--spacing-unit) * 2); /* 16px */
+            color: var(--text-light);
+            text-decoration: none;
+            text-align: center;
+            cursor: pointer;
+            opacity: 0;
+            transform: scale(0.8);
+            animation: scale-in 0.4s forwards cubic-bezier(0.34, 1.56, 0.64, 1);
+            animation-delay: calc(var(--i) * 0.08s + 0.5s); /* Staggered animation */
+            border: 2px solid transparent;
+            transition: background-color 0.2s, transform 0.2s, border-color 0.2s;
+        }
+        .menu-option:hover, .menu-option:focus-visible {
+            background-color: var(--primary-light);
+            transform: scale(1.05) !important; /* Override animation transform */
+            border-color: var(--secondary);
+        }
+
+
+        @keyframes scale-in {
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .menu-option i.fas { /* Font Awesome icon styling */
+            font-size: 2rem; /* 32px */
+            margin-bottom: var(--spacing-unit); /* 8px */
+            color: var(--secondary);
+            transition: transform 0.2s;
+        }
+        .menu-option:hover i.fas {
+            transform: scale(1.1);
+        }
+
+        .menu-option h3 {
+            margin-bottom: calc(var(--spacing-unit) * 0.75); /* 6px */
+            font-weight: 600;
+            font-size: 1.1rem; /* 17.6px */
+        }
+
+        .menu-option p {
+            font-size: 0.85rem; /* 13.6px */
+            color: var(--text-medium);
+            line-height: 1.4;
+        }
+
+        /* Scriptorium, Visage Shaper, Collection Forge Common Styles */
+        .content-screen-padding { /* Common padding for content screens */
+             padding: calc(var(--spacing-unit) * 2.5) calc(var(--spacing-unit) * 1.25); /* 20px 10px */
+        }
+        @media (min-width: 768px) {
+            .content-screen-padding {
+                 padding: calc(var(--spacing-unit) * 5) calc(var(--spacing-unit) * 2.5); /* 40px 20px */
+            }
+        }
+
+
+        .form-section h2, .preview-section h2, .cropping-section h2, .result-section h2, .card-selection h2, .pack-details h2, .library-content h2 {
+            color: var(--secondary);
+            margin-bottom: calc(var(--spacing-unit) * 2.5); /* 20px */
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: var(--spacing-unit); /* 8px */
+            font-size: 1.75rem; /* 28px */
+        }
+        
+        .form-section form, .pack-form {
+            display: flex;
+            flex-direction: column;
+            gap: calc(var(--spacing-unit) * 2.5); /* 20px */
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit); /* 8px */
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: var(--text-medium);
+        }
+
+        .form-control {
+            padding: calc(var(--spacing-unit) * 1.25); /* 10px */
+            background-color: var(--bg-content-light);
+            border: 1px solid var(--border);
+            border-radius: calc(var(--spacing-unit) * 0.5); /* 4px */
+            color: var(--text-light);
+            width: 100%;
+            min-height: 44px;
+        }
+        .form-control:focus { /* Already handled by global focus-visible */ }
+
+
+        /* Scriptorium Screen */
+        #scriptorium .container, #visage-shaper .container, #collection-forge .container {
+            padding-top: calc(var(--spacing-unit) * 2.5); /* 20px */
+            padding-bottom: calc(var(--spacing-unit) * 2.5); /* 20px */
+        }
+
+        .scriptorium-container, .visage-container, .forge-container {
+            display: grid;
+            grid-template-columns: 1fr; /* Default to single column */
+            gap: calc(var(--spacing-unit) * 3.75); /* 30px */
+            background-color: var(--bg-content);
+            padding: calc(var(--spacing-unit) * 3.75); /* 30px */
+            border-radius: var(--spacing-unit); /* 8px */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        @media (min-width: 992px) { /* Desktop layout */
+            .scriptorium-container, .visage-container {
+                grid-template-columns: 3fr 2fr; /* Form left, preview right */
+            }
+            .forge-container {
+                 grid-template-columns: 2fr 1fr; /* Card list left, details right */
+            }
+        }
+        
+        .metadata-list {
+            margin-top: calc(var(--spacing-unit) * 2.5); /* 20px */
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit); /* 8px */
+        }
+
+        .metadata-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: var(--spacing-unit); /* 8px */
+            align-items: center;
+        }
+
+        .add-metadata-btn-container { /* Renamed from .add-metadata */
+            display: flex;
+            justify-content: flex-end;
+            margin-top: var(--spacing-unit); /* 8px */
+        }
+
+        .preview-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card-preview-wrapper { /* Wrapper for the card preview itself */
+            width: 100%;
+            max-width: 300px; /* Max width for preview card */
+            aspect-ratio: 1 / 1.15; /* Maintain hex aspect ratio */
+            margin-bottom: calc(var(--spacing-unit) * 3.75); /* 30px */
+            position: relative;
+        }
+        
+        .card-preview-display { /* The actual hex card shape */
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-content-light);
+            border: 3px solid var(--secondary);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Space for title and attributes */
+            align-items: center;
+            padding: calc(var(--spacing-unit) * 2); /* 16px */
+            overflow: hidden; /* Clip content to hexagon */
+            text-align: center;
+        }
+
+        .card-image-preview { /* Renamed from .card-image */
+            width: 90%;
+            flex-grow: 1; /* Allow image area to take available space */
+            max-height: 50%; /* Limit image height */
+            background-color: var(--bg-content);
+            margin-bottom: var(--spacing-unit); /* 8px */
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: calc(var(--spacing-unit) * 0.5); /* 4px */
+        }
+
+        .card-image-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Changed to contain for better preview */
+        }
+        .card-image-preview--empty {
+            color: var(--text-medium);
+            font-style: italic;
+        }
+
+
+        .card-title-preview { /* Renamed from .card-title */
+            font-size: 1.1rem; /* 17.6px */
+            font-weight: 700;
+            margin-bottom: var(--spacing-unit); /* 8px */
+            color: var(--secondary);
+            word-break: break-word;
+        }
+
+        .card-metadata-preview { /* Renamed from .card-metadata */
+            width: 100%;
+            font-size: 0.85rem; /* 13.6px */
+            color: var(--text-medium);
+            max-height: 80px; /* Limit height and allow scroll */
+            overflow-y: auto;
+        }
+
+        .card-metadata-item-preview { /* Renamed from .card-metadata-item */
+            display: flex;
+            justify-content: space-between;
+            padding: calc(var(--spacing-unit) * 0.5) 0; /* 4px */
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+        }
+        .card-metadata-item-preview:last-child {
+            border-bottom: none;
+        }
+
+        .action-buttons {
+            margin-top: calc(var(--spacing-unit) * 2.5); /* 20px */
+            display: flex;
+            gap: var(--spacing-unit); /* 8px */
+            justify-content: flex-end; /* Align to right */
+            flex-wrap: wrap; /* Allow buttons to wrap on small screens */
+        }
+
+        /* Visage Shaper Screen */
+        .cropping-area, .result-preview-container { /* Renamed .result-preview */
+            width: 100%;
+            aspect-ratio: 4 / 3; /* Maintain aspect ratio */
+            max-height: 400px; /* Limit height */
+            background-color: var(--bg-content-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border: 1px dashed var(--border);
+            overflow: hidden; /* Important for cropper */
+        }
+        .cropping-area img, .result-preview-container img {
+            max-width: 100%;
+            max-height: 100%;
+            display: block; /* Remove extra space below image */
+            user-select: none; /* Prevent image selection during drag */
+        }
+
+        .crop-overlay { /* Draggable Hexagon Mask */
+            position: absolute;
+            width: 60%; /* Initial size */
+            aspect-ratio: 1 / 1.15; /* Hexagon aspect ratio */
+            max-width: 90%; /* Prevent being larger than parent */
+            max-height: 90%;
+            background-color: rgba(74, 0, 114, 0.3); /* Semi-transparent purple */
+            border: 2px solid var(--secondary);
+            cursor: move;
+            /* clip-path applied by .hex-card-shape */
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); /* Dim area outside */
+        }
+
+        .cropping-controls {
+            margin-top: calc(var(--spacing-unit) * 2.5); /* 20px */
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-unit) * 1.5;
+        }
+
+        .control-group {
+            margin-bottom: calc(var(--spacing-unit) * 1.5); /* 12px */
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: var(--spacing-unit); /* 8px */
+            color: var(--text-medium);
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            accent-color: var(--secondary); /* Style the slider thumb and track */
+        }
+        .result-preview-container {
+            border-style: solid;
+            border-color: var(--primary);
+        }
+
+
+        /* Obsidian Library Screen */
+        .library-layout {
+            display: flex; /* Changed to flex for better mobile handling */
+            flex-direction: column; /* Stack sidebar and content on mobile */
+            min-height: calc(100vh - 60px - (var(--spacing-unit) * 5)); /* Adjust for header and padding */
+        }
+        @media (min-width: 768px) {
+            .library-layout {
+                flex-direction: row; /* Side by side on larger screens */
+            }
+        }
+
+
+        .sidebar {
+            background-color: var(--primary);
+            padding: calc(var(--spacing-unit) * 2.5); /* 20px */
+            width: 100%; /* Full width on mobile */
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+        @media (min-width: 768px) {
+            .sidebar {
+                width: 240px; /* Fixed width on desktop */
+                height: auto; /* Allow content to define height */
+            }
+        }
+
+
+        .sidebar h2 {
+            color: var(--secondary);
+            margin-bottom: calc(var(--spacing-unit) * 2.5); /* 20px */
+            padding-bottom: var(--spacing-unit); /* 8px */
+            border-bottom: 1px solid var(--secondary-light);
+            font-size: 1.5rem;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: var(--spacing-unit); /* 8px */
+        }
+
+        .sidebar-menu a {
+            color: var(--text-light);
+            text-decoration: none;
+            display: block;
+            padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.25); /* 8px 10px */
+            border-radius: calc(var(--spacing-unit) * 0.5); /* 4px */
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active-sidebar-link {
+            background-color: var(--primary-light);
+            color: var(--secondary);
+        }
+
+        .sidebar-menu a.active-sidebar-link {
+            border-left: 3px solid var(--secondary);
+            font-weight: 600;
+        }
+
+        .library-content {
+            padding: calc(var(--spacing-unit) * 2.5); /* 20px */
+            flex-grow: 1; /* Take remaining space */
+            background-color: var(--bg-content);
+        }
+
+        .toolbar {
+            display: flex;
+            flex-direction: column; /* Stack on mobile */
+            gap: var(--spacing-unit) * 1.5; /* 12px */
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: calc(var(--spacing-unit) * 2.5); /* 20px */
+            padding: var(--spacing-unit) * 1.5; /* 12px */
+            background-color: var(--bg-content-light);
+            border-radius: calc(var(--spacing-unit) * 0.5); /* 4px */
+        }
+         @media (min-width: 768px) {
+            .toolbar {
+                flex-direction: row; /* Side by side on desktop */
+            }
+        }
+
+
+        .search-bar {
+            display: flex;
+            width: 100%;
+            max-width: 400px; /* Limit search bar width */
+        }
+
+        .search-bar input {
+            padding: var(--spacing-unit); /* 8px */
+            border: 1px solid var(--border);
+            background-color: var(--bg-content);
+            color: var(--text-light);
+            border-radius: calc(var(--spacing-unit) * 0.5) 0 0 calc(var(--spacing-unit) * 0.5); /* 4px */
+            flex-grow: 1;
+            min-height: 44px;
+        }
+
+        .search-bar button {
+            background-color: var(--primary);
+            color: var(--text-light);
+            border: none;
+            border-radius: 0 calc(var(--spacing-unit) * 0.5) calc(var(--spacing-unit) * 0.5) 0; /* 4px */
+            padding: 0 calc(var(--spacing-unit) * 1.5); /* 12px */
+            cursor: pointer;
+            min-height: 44px;
+        }
+        .search-bar button:hover { background-color: var(--primary-dark); }
+
+
+        .filter-options {
+            display: flex;
+            gap: var(--spacing-unit); /* 8px */
+            flex-wrap: wrap; /* Allow filters to wrap */
+        }
+        .filter-options .btn {
+            padding: calc(var(--spacing-unit) * 0.75) var(--spacing-unit); /* 6px 8px */
+            font-size: 0.85rem;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Responsive columns */
+            gap: calc(var(--spacing-unit) * 2.5); /* 20px */
+        }
+
+        .card-item { /* This is the hex-card-shape */
+            background-color: var(--bg-content-light);
+            aspect-ratio: 1 / 1.15; /* For vertical hexagon */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between; /* To push title down */
+            padding: var(--spacing-unit); /* 8px */
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid var(--border);
+            overflow: hidden; /* Important for hex shape */
+        }
+
+        .card-item:hover, .card-item:focus-visible {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--secondary-light);
+            border-color: var(--secondary);
+        }
+
+        .card-thumbnail { /* Image container inside card-item */
+            width: 90%;
+            height: 65%; /* Adjust to fit image well */
+            background-color: var(--bg-content);
+            border: 1px solid var(--primary);
+            margin-bottom: var(--spacing-unit); /* 8px */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            /* For hex shape if image itself is hex */
+            /* clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); */
+        }
+
+        .card-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-info {
+            text-align: center;
+            width: 100%;
+            padding: 0 calc(var(--spacing-unit) * 0.5); /* 4px */
+        }
+
+        .card-info h4 {
+            font-size: 0.9rem; /* 14.4px */
+            margin-bottom: calc(var(--spacing-unit) * 0.5); /* 4px */
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-info p {
+            font-size: 0.75rem; /* 12px */
+            color: var(--text-medium);
+        }
+
+        /* Collection Forge Screen */
+        .card-selection h2, .pack-details h2 {
+            font-size: 1.5rem; /* 24px */
+        }
+
+        .card-list {
+            height: 500px;
+            overflow-y: auto;
+            background-color: var(--bg-content-light);
+            padding: calc(var(--spacing-unit) * 1.5); /* 12px */
+            border-radius: calc(var(--spacing-unit) * 0.5); /* 4px */
+            border: 1px solid var(--border);
+        }
+
+        .card-list-item {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-unit); /* 8px */
+            border-bottom: 1px solid var(--border);
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .card-list-item:last-child { border-bottom: none; }
+        .card-list-item:hover { background-color: var(--primary-light); }
+
+
+        .list-thumbnail { /* Hexagonal thumbnail for list items */
+            width: 60px;
+            height: 69px; /* 60 * 1.15 for hex aspect ratio */
+            background-color: var(--bg-content);
+            margin-right: calc(var(--spacing-unit) * 1.5); /* 12px */
+            border: 1px solid var(--primary);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .list-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .list-item-info {
+            flex-grow: 1;
+        }
+
+        .list-item-info h4 {
+            font-size: 0.9rem; /* 14.4px */
+            margin-bottom: calc(var(--spacing-unit) * 0.5); /* 4px */
+            color: var(--text-light);
+        }
+
+        .list-item-info p {
+            font-size: 0.8rem; /* 12.8px */
+            color: var(--text-medium);
+        }
+
+        .list-checkbox {
+            margin-left: var(--spacing-unit); /* 8px */
+            transform: scale(1.2); /* Make checkbox slightly larger */
+            accent-color: var(--secondary);
+        }
+
+        .pack-details {
+            display: flex;
+            flex-direction: column;
+        }
+        .pack-preview { /* Placeholder for pack icon/art */
+            width: 100%;
+            max-width: 200px;
+            aspect-ratio: 1;
+            background-color: var(--bg-content-light);
+            border: 1px dashed var(--border);
+            border-radius: calc(var(--spacing-unit) * 0.5); /* 4px */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-medium);
+            margin-top: var(--spacing-unit); /* 8px */
+        }
+
+
+    </style>
+</head>
+<body>
+    <header role="banner">
+        <div class="container">
+            <div class="logo">
+                <h1>HEX <span>CARD</span> FORGE</h1>
+            </div>
+            <nav role="navigation" aria-label="Main Navigation">
+                <ul>
+                    <li><a href="#gateway" class="nav-link active-nav-link" data-screen="gateway">Gateway</a></li>
+                    <li><a href="#obsidian-library" class="nav-link" data-screen="obsidian-library">Library</a></li>
+                    <li><a href="#scriptorium" class="nav-link" data-screen="scriptorium">Scriptorium</a></li>
+                    <li><a href="#visage-shaper" class="nav-link" data-screen="visage-shaper">Visage Shaper</a></li>
+                    <li><a href="#collection-forge" class="nav-link" data-screen="collection-forge">Collection Forge</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main role="main">
+        <section id="gateway" class="screen active">
+            <div class="hex-bg"></div>
+            <div class="title-section">
+                <h1>HEX <span>CARD</span> FORGE</h1>
+                <p>Craft Your Legend, One Hex at a Time</p>
+            </div>
+            <div class="hex-menu container">
+                <a href="#" class="menu-option hex-card-shape" style="--i:1;" data-screen-link="scriptorium" aria-label="Create New Card">
+                    <i class="fas fa-magic"></i> <h3>Create New Card</h3>
+                    <p>Begin a new artifact of power.</p>
+                </a>
+                <a href="#" class="menu-option hex-card-shape" style="--i:2;" data-screen-link="obsidian-library" aria-label="Open Card Library">
+                    <i class="fas fa-book-open"></i>
+                    <h3>Card Library</h3>
+                    <p>Browse your collection of relics.</p>
+                </a>
+                <a href="#" class="menu-option hex-card-shape" style="--i:3;" data-screen-link="collection-forge" aria-label="Create Booster Pack">
+                    <i class="fas fa-box-open"></i>
+                    <h3>Booster Packs</h3>
+                    <p>Assemble collections of might.</p>
+                </a>
+                <a href="#" class="menu-option hex-card-shape" style="--i:4;" data-screen-link="scriptorium" aria-label="Design Card Template (Leads to Scriptorium for now)">
+                    <i class="fas fa-drafting-compass"></i>
+                    <h3>Design Template</h3>
+                    <p>Shape card layouts and defaults.</p>
+                </a>
+                <a href="#" class="menu-option hex-card-shape" style="--i:5;" data-screen-link="visage-shaper" aria-label="Image Tools (Leads to Visage Shaper for now)">
+                    <i class="fas fa-crop-alt"></i>
+                    <h3>Image Tools</h3>
+                    <p>Refine visages for your cards.</p>
+                </a>
+            </div>
+        </section>
+
+        <section id="scriptorium" class="screen content-screen-padding">
+            <div class="container">
+                <div class="scriptorium-container">
+                    <div class="form-section">
+                        <h2>The Scriptorium - Card Editor</h2>
+                        <form id="cardForm">
+                            <div class="form-group">
+                                <label for="cardTitle">Card Title</label>
+                                <input type="text" id="cardTitle" class="form-control" placeholder="Aegis of the Ancients" value="Mystic Scroll" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="cardImageUpload">Card Image</label>
+                                <input type="file" id="cardImageUpload" class="form-control" accept="image/*">
+                                <div class="card-image-preview hex-card-shape" id="editorImagePreviewContainer" style="width:150px; height:172px; margin-top:10px; background-color: var(--bg-content);">
+                                    <img id="editorImagePreview" src="#" alt="Selected image preview" style="display:none;">
+                                    <span id="editorImagePlaceholder" class="card-image-preview--empty">No Image</span>
+                                </div>
+                            </div>
+                            
+                            <h3>Metadata</h3>
+                            <div id="metadataList" class="metadata-list">
+                                <div class="metadata-item">
+                                    <input type="text" class="form-control metadata-key" placeholder="Property Name" value="Element">
+                                    <input type="text" class="form-control metadata-value" placeholder="Property Value" value="Arcane">
+                                    <button type="button" class="btn btn--danger btn--icon remove-metadata-btn" aria-label="Remove metadata item">&times;</button>
+                                </div>
+                            </div>
+                            <div class="add-metadata-btn-container">
+                                <button type="button" id="addMetadataBtn" class="btn">Add Property</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="preview-section">
+                        <h2>Oracle's Preview</h2>
+                        <div class="card-preview-wrapper">
+                            <div id="liveCardPreview" class="card-preview-display hex-card-shape">
+                                <div class="card-image-preview" id="previewImageContainer">
+                                    <img id="previewImage" src="#" alt="Card image preview" style="display:none;">
+                                    <span id="previewImagePlaceholder" class="card-image-preview--empty">Card Image</span>
+                                </div>
+                                <h3 id="previewTitle" class="card-title-preview">Mystic Scroll</h3>
+                                <div id="previewMetadata" class="card-metadata-preview">
+                                    <div class="card-metadata-item-preview"><span>Element</span><span>Arcane</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-secondary" id="saveCardBtn">Seal Card (Save)</button>
+                            <button type="button" class="btn btn--neutral" id="clearFormBtn">Clear Form</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="visage-shaper" class="screen content-screen-padding">
+            <div class="container">
+                <div class="visage-container">
+                    <div class="cropping-section">
+                        <h2>Shape the Visage</h2>
+                        <div class="cropping-area" id="croppingAreaContainer">
+                            <img id="imageToCrop" src="https://placehold.co/600x450/2C2C44/B0B0B0?text=Upload+Image+to+Crop" alt="Image to crop">
+                            <div id="cropOverlay" class="crop-overlay hex-card-shape"></div>
+                        </div>
+                        <div class="cropping-controls">
+                            <div class="control-group">
+                                <label for="zoomSlider">Zoom:</label>
+                                <input type="range" id="zoomSlider" class="form-control" min="50" max="200" value="100">
+                            </div>
+                            </div>
+                    </div>
+                    <div class="result-section">
+                        <h2>Shaped Preview</h2>
+                        <div class="result-preview-container hex-card-shape" id="cropResultPreview">
+                            </div>
+                        <div class="action-buttons">
+                           <button type="button" class="btn btn-secondary" id="applyCropBtn">Apply Shape</button>
+                           <button type="button" class="btn btn--neutral" data-screen-link="scriptorium">Back to Editor</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="obsidian-library" class="screen">
+            <div class="library-layout">
+                <aside class="sidebar" role="complementary">
+                    <h2>Library Filters</h2>
+                    <ul class="sidebar-menu">
+                        <li><a href="#" class="active-sidebar-link">All Cards</a></li>
+                        <li><a href="#">By Type</a></li>
+                        <li><a href="#">By Rarity</a></li>
+                        <li><a href="#">Recently Added</a></li>
+                    </ul>
+                </aside>
+                <div class="library-content content-screen-padding">
+                    <h2>The Obsidian Library</h2>
+                    <div class="toolbar">
+                        <div class="search-bar">
+                            <label for="librarySearchInput" class="hidden-visually">Search Cards</label>
+                            <input type="search" id="librarySearchInput" placeholder="Search relics by name or lore...">
+                            <button class="btn" aria-label="Search"><i class="fas fa-search"></i></button>
+                        </div>
+                        <div class="filter-options">
+                            <button class="btn btn--neutral">Sort By: Name</button>
+                            <button class="btn btn--neutral">View: Grid</button>
+                        </div>
+                    </div>
+                    <div id="cardGrid" class="card-grid">
+                        <div class="card-item hex-card-shape" tabindex="0" aria-label="Card: Dragon's Breath, Type: Fire">
+                            <div class="card-thumbnail"><img src="https://placehold.co/150x100/4A0072/DAA520?text=DB" alt="Dragon's Breath"></div>
+                            <div class="card-info"><h4>Dragon's Breath</h4><p>Fire Type</p></div>
+                        </div>
+                        <div class="card-item hex-card-shape" tabindex="0" aria-label="Card: Forest Spirit, Type: Nature">
+                            <div class="card-thumbnail"><img src="https://placehold.co/150x100/3A005A/DAA520?text=FS" alt="Forest Spirit"></div>
+                            <div class="card-info"><h4>Forest Spirit</h4><p>Nature Type</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="collection-forge" class="screen content-screen-padding">
+            <div class="container">
+                 <div class="forge-container">
+                    <div class="card-selection">
+                        <h2>Select Cards for Pack</h2>
+                        <div class="toolbar" style="background-color: transparent; padding: 0 0 20px 0;">
+                             <div class="search-bar" style="max-width:100%;">
+                                <label for="packCardSearch" class="hidden-visually">Search cards for pack</label>
+                                <input type="search" id="packCardSearch" placeholder="Filter cards...">
+                                <button class="btn" aria-label="Search Cards"><i class="fas fa-filter"></i></button>
+                            </div>
+                        </div>
+                        <div id="packCardList" class="card-list">
+                            <div class="card-list-item" tabindex="0">
+                                <div class="list-thumbnail hex-card-shape"><img src="https://placehold.co/60x69/4A0072/DAA520?text=DB" alt="Dragon's Breath"></div>
+                                <div class="list-item-info"><h4>Dragon's Breath</h4><p>Fire Type, Common</p></div>
+                                <input type="checkbox" class="list-checkbox" aria-label="Select Dragon's Breath">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pack-details">
+                        <h2>Pack Details</h2>
+                        <form id="packForm" class="pack-form">
+                            <div class="form-group">
+                                <label for="packName">Pack Name</label>
+                                <input type="text" id="packName" class="form-control" placeholder="Genesis Starter Pack">
+                            </div>
+                            <div class="form-group">
+                                <label for="packDescription">Description</label>
+                                <textarea id="packDescription" class="form-control" rows="4" placeholder="Contains foundational cards..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="packIconUpload">Pack Icon (Optional)</label>
+                                <input type="file" id="packIconUpload" class="form-control" accept="image/*">
+                                <div class="pack-preview" id="packIconPreview">Pack Icon Preview</div>
+                            </div>
+                            <div class="action-buttons" style="justify-content: flex-start;">
+                                <button type="button" class="btn btn-secondary">Create & Export Pack</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const navLinks = document.querySelectorAll('nav a.nav-link');
+    const screenLinks = document.querySelectorAll('[data-screen-link]');
+    const screens = document.querySelectorAll('.screen');
+    const headerHeight = document.querySelector('header').offsetHeight;
+
+    function showScreen(screenId) {
+        screens.forEach(screen => {
+            if (screen.id === screenId) {
+                screen.classList.add('active');
+                screen.style.paddingTop = headerHeight + 'px'; // Adjust padding for fixed header
+                // For accessibility, move focus to the new screen
+                screen.setAttribute('tabindex', '-1'); // Make it focusable
+                screen.focus();
+            } else {
+                screen.classList.remove('active');
+                screen.removeAttribute('tabindex');
+            }
+        });
+        navLinks.forEach(link => {
+            link.classList.toggle('active-nav-link', link.dataset.screen === screenId);
+        });
+         // Close mobile sidebar if open
+        const mobileSidebar = document.getElementById('appSidebar'); // Assuming you might add one
+        if (mobileSidebar && mobileSidebar.classList.contains('open')) {
+            mobileSidebar.classList.remove('open');
+        }
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const screenId = link.dataset.screen;
+            showScreen(screenId);
+            // Update URL hash for history (optional)
+            // window.location.hash = screenId;
+        });
+    });
+    
+    screenLinks.forEach(link => {
+         link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const screenId = link.dataset.screenLink;
+            showScreen(screenId);
+        });
+    });
+
+
+    // Initialize first screen (Gateway)
+    showScreen('gateway');
+
+    // --- Scriptorium (Card Editor) Logic ---
+    const cardTitleInput = document.getElementById('cardTitle');
+    const previewTitle = document.getElementById('previewTitle');
+    const metadataList = document.getElementById('metadataList');
+    const addMetadataBtn = document.getElementById('addMetadataBtn');
+    const previewMetadata = document.getElementById('previewMetadata');
+    const cardImageUpload = document.getElementById('cardImageUpload');
+    const editorImagePreview = document.getElementById('editorImagePreview');
+    const editorImagePlaceholder = document.getElementById('editorImagePlaceholder');
+    const previewImage = document.getElementById('previewImage');
+    const previewImagePlaceholder = document.getElementById('previewImagePlaceholder');
+    const saveCardBtn = document.getElementById('saveCardBtn');
+    const clearFormBtn = document.getElementById('clearFormBtn');
+
+
+    function updatePreview() {
+        // Update title
+        previewTitle.textContent = cardTitleInput.value.trim() || 'Card Title';
+
+        // Update metadata
+        previewMetadata.innerHTML = '';
+        const items = metadataList.querySelectorAll('.metadata-item');
+        items.forEach(item => {
+            const key = item.querySelector('.metadata-key').value.trim();
+            const value = item.querySelector('.metadata-value').value.trim();
+            if (key) {
+                const div = document.createElement('div');
+                div.className = 'card-metadata-item-preview';
+                div.innerHTML = `<span>${key}</span><span>${value || 'N/A'}</span>`;
+                previewMetadata.appendChild(div);
+            }
+        });
+    }
+
+    if (cardTitleInput) cardTitleInput.addEventListener('input', updatePreview);
+    if (metadataList) metadataList.addEventListener('input', updatePreview);
+
+    if (addMetadataBtn) {
+        addMetadataBtn.addEventListener('click', () => {
+            const newItem = document.createElement('div');
+            newItem.className = 'metadata-item';
+            newItem.innerHTML = `
+                <input type="text" class="form-control metadata-key" placeholder="Property Name">
+                <input type="text" class="form-control metadata-value" placeholder="Property Value">
+                <button type="button" class="btn btn--danger btn--icon remove-metadata-btn" aria-label="Remove metadata item">&times;</button>
+            `;
+            metadataList.appendChild(newItem);
+            newItem.querySelector('.remove-metadata-btn').addEventListener('click', function() {
+                this.parentElement.remove();
+                updatePreview();
+            });
+        });
+    }
+    // Initial remove buttons
+    metadataList.querySelectorAll('.remove-metadata-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            this.parentElement.remove();
+            updatePreview();
+        });
+    });
+
+
+    if (cardImageUpload) {
+        cardImageUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    editorImagePreview.src = event.target.result;
+                    editorImagePreview.style.display = 'block';
+                    editorImagePlaceholder.style.display = 'none';
+                    
+                    previewImage.src = event.target.result;
+                    previewImage.style.display = 'block';
+                    previewImagePlaceholder.style.display = 'none';
+
+                    // Also update image in Visage Shaper
+                    const imageToCrop = document.getElementById('imageToCrop');
+                    if (imageToCrop) imageToCrop.src = event.target.result;
+                    updateCropResultPreview(); // Update cropper preview if image changes
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    if (clearFormBtn) {
+        clearFormBtn.addEventListener('click', () => {
+            document.getElementById('cardForm').reset();
+            metadataList.innerHTML = ''; // Clear dynamic metadata
+             // Reset image previews
+            editorImagePreview.src = '#';
+            editorImagePreview.style.display = 'none';
+            editorImagePlaceholder.style.display = 'block';
+            previewImage.src = '#';
+            previewImage.style.display = 'none';
+            previewImagePlaceholder.style.display = 'block';
+            const imageToCrop = document.getElementById('imageToCrop');
+            if (imageToCrop) imageToCrop.src = 'https://placehold.co/600x450/2C2C44/B0B0B0?text=Upload+Image+to+Crop';
+            updatePreview();
+            updateCropResultPreview();
+        });
+    }
+
+    if(saveCardBtn) {
+        saveCardBtn.addEventListener('click', () => {
+            // Basic validation example
+            if (!cardTitleInput.value.trim()) {
+                alert("Card Title cannot be empty!");
+                cardTitleInput.focus();
+                return;
+            }
+            // In a real app, collect all data and send to backend or store locally
+            console.log("Card Saved (Conceptual):", {
+                title: cardTitleInput.value,
+                // image: previewImage.src, // or file object
+                metadata: Array.from(metadataList.querySelectorAll('.metadata-item')).map(item => ({
+                    key: item.querySelector('.metadata-key').value,
+                    value: item.querySelector('.metadata-value').value
+                }))
+            });
+            alert("Card 'Sealed' (data logged to console).");
+        });
+    }
+
+
+    // --- Visage Shaper (Image Cropper) Logic ---
+    const croppingAreaContainer = document.getElementById('croppingAreaContainer');
+    const imageToCrop = document.getElementById('imageToCrop');
+    const cropOverlay = document.getElementById('cropOverlay');
+    const zoomSlider = document.getElementById('zoomSlider');
+    const cropResultPreview = document.getElementById('cropResultPreview');
+    const applyCropBtn = document.getElementById('applyCropBtn');
+
+    let isDragging = false;
+    let startX, startY, initialOverlayX, initialOverlayY;
+    let currentZoom = 1;
+    let imageOriginalWidth, imageOriginalHeight;
+
+    if (imageToCrop) {
+        imageToCrop.onload = () => {
+            imageOriginalWidth = imageToCrop.naturalWidth;
+            imageOriginalHeight = imageToCrop.naturalHeight;
+            // Reset overlay and zoom on new image load
+            currentZoom = 1;
+            if(zoomSlider) zoomSlider.value = 100;
+            imageToCrop.style.transform = `scale(1)`;
+            if(cropOverlay) {
+                 // Center overlay initially
+                const containerWidth = croppingAreaContainer.offsetWidth;
+                const containerHeight = croppingAreaContainer.offsetHeight;
+                const overlayWidth = cropOverlay.offsetWidth;
+                const overlayHeight = cropOverlay.offsetHeight;
+                cropOverlay.style.left = `${(containerWidth - overlayWidth) / 2}px`;
+                cropOverlay.style.top = `${(containerHeight - overlayHeight) / 2}px`;
+            }
+            updateCropResultPreview();
+        };
+        // If image is already loaded (e.g. from cache or set by Scriptorium)
+        if (imageToCrop.complete && imageToCrop.naturalWidth > 0) {
+            imageToCrop.onload();
+        }
+    }
+
+
+    if (cropOverlay && croppingAreaContainer) {
+        cropOverlay.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialOverlayX = cropOverlay.offsetLeft;
+            initialOverlayY = cropOverlay.offsetTop;
+            cropOverlay.style.cursor = 'grabbing';
+            e.preventDefault(); // Prevent text selection
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            
+            let newX = initialOverlayX + dx;
+            let newY = initialOverlayY + dy;
+
+            // Boundary checks for overlay
+            const maxX = croppingAreaContainer.offsetWidth - cropOverlay.offsetWidth;
+            const maxY = croppingAreaContainer.offsetHeight - cropOverlay.offsetHeight;
+            
+            newX = Math.max(0, Math.min(newX, maxX));
+            newY = Math.max(0, Math.min(newY, maxY));
+
+            cropOverlay.style.left = `${newX}px`;
+            cropOverlay.style.top = `${newY}px`;
+            updateCropResultPreview();
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                cropOverlay.style.cursor = 'move';
+            }
+        });
+    }
+
+    if (zoomSlider && imageToCrop) {
+        zoomSlider.addEventListener('input', () => {
+            currentZoom = parseFloat(zoomSlider.value) / 100;
+            imageToCrop.style.transformOrigin = 'center center'; // Ensure zoom is from center
+            imageToCrop.style.transform = `scale(${currentZoom})`;
+            updateCropResultPreview();
+        });
+    }
+
+    function updateCropResultPreview() {
+        if (!imageToCrop || !cropOverlay || !cropResultPreview || !imageToCrop.complete || imageToCrop.naturalWidth === 0) return;
+
+        const imgRect = imageToCrop.getBoundingClientRect(); // Scaled image rect
+        const overlayRect = cropOverlay.getBoundingClientRect();
+        const containerRect = croppingAreaContainer.getBoundingClientRect();
+
+        // Calculate position of overlay relative to the (potentially scaled) image's top-left visible corner
+        const cropX = (overlayRect.left - imgRect.left) / currentZoom;
+        const cropY = (overlayRect.top - imgRect.top) / currentZoom;
+        const cropWidth = overlayRect.width / currentZoom;
+        const cropHeight = overlayRect.height / currentZoom;
+
+        // Set background for preview
+        cropResultPreview.style.backgroundImage = `url('${imageToCrop.src}')`;
+        // The background-size should be the original image size, scaled by the currentZoom
+        // then further scaled such that the cropped portion fills the preview.
+        const previewRatio = cropResultPreview.offsetWidth / cropWidth; // How much to scale the cropped part to fill preview
+        
+        cropResultPreview.style.backgroundSize = `${imageOriginalWidth * previewRatio}px ${imageOriginalHeight * previewRatio}px`;
+        cropResultPreview.style.backgroundPosition = `-${cropX * previewRatio}px -${cropY * previewRatio}px`;
+    }
+    
+    if(applyCropBtn) {
+        applyCropBtn.addEventListener('click', () => {
+            if (previewImage && cropResultPreview.style.backgroundImage) {
+                // This is a simplified application. A real app would generate a new image/dataURL.
+                // For SVG preview, this would be more complex, involving setting pattern attributes.
+                // For now, just update the <img> preview in Scriptorium if it exists.
+                previewImage.src = imageToCrop.src; // Use the original source
+                // To truly reflect the crop on an <img>, you'd need to use a canvas or CSS object-position with object-fit: none
+                // and adjust width/height/margins of the img itself, which is complex.
+                // A simpler visual for this prototype:
+                previewImage.style.objectFit = 'none'; // This will allow us to "pan" the image
+                
+                // The following is a conceptual translation of the crop to an object-position
+                // It's not perfect due to scaling and hex shape, but gives an idea.
+                const overlayRect = cropOverlay.getBoundingClientRect();
+                const imgRect = imageToCrop.getBoundingClientRect();
+                const relativeX = (overlayRect.left - imgRect.left) / imgRect.width;
+                const relativeY = (overlayRect.top - imgRect.top) / imgRect.height;
+                
+                previewImage.style.width = `${(imgRect.width / overlayRect.width) * 100}%`;
+                previewImage.style.height = `${(imgRect.height / overlayRect.height) * 100}%`;
+                previewImage.style.objectPosition = `-${relativeX * 100}% -${relativeY * 100}%`;
+                
+                previewImage.style.display = 'block';
+                previewImagePlaceholder.style.display = 'none';
+                
+                editorImagePreview.src = previewImage.src; // Also update editor's small preview
+                editorImagePreview.style.objectFit = previewImage.style.objectFit;
+                editorImagePreview.style.width = previewImage.style.width;
+                editorImagePreview.style.height = previewImage.style.height;
+                editorImagePreview.style.objectPosition = previewImage.style.objectPosition;
+                editorImagePreview.style.display = 'block';
+                editorImagePlaceholder.style.display = 'none';
+
+                alert("Crop applied (visually approximated in preview).");
+            }
+            showScreen('scriptorium'); // Go back to editor
+        });
+    }
+
+
+    // --- Obsidian Library (Placeholder population) ---
+    const cardGrid = document.getElementById('cardGrid');
+    if (cardGrid) {
+        const sampleCards = [
+            { title: "Shadow Weaver", type: "Dark", imgSrc: "https://placehold.co/150x100/2C2C44/DAA520?text=SW" },
+            { title: "Sunstone Golem", type: "Earth", imgSrc: "https://placehold.co/150x100/5C4077/DAA520?text=SG" },
+            { title: "Tidal Serpent", type: "Water", imgSrc: "https://placehold.co/150x100/404058/DAA520?text=TS" },
+            { title: "Sky Sentinel", type: "Air", imgSrc: "https://placehold.co/150x100/1A1A2E/DAA520?text=SS" }
+        ];
+        // Clear existing placeholders if any, except the first two
+        while (cardGrid.children.length > 2) {
+            cardGrid.removeChild(cardGrid.lastChild);
+        }
+
+        sampleCards.forEach(card => {
+            const cardItem = document.createElement('div');
+            cardItem.className = 'card-item hex-card-shape';
+            cardItem.tabIndex = 0;
+            cardItem.setAttribute('aria-label', `Card: ${card.title}, Type: ${card.type}`);
+            cardItem.innerHTML = `
+                <div class="card-thumbnail"><img src="${card.imgSrc}" alt="${card.title}"></div>
+                <div class="card-info"><h4>${card.title}</h4><p>${card.type} Type</p></div>
+            `;
+            cardGrid.appendChild(cardItem);
+        });
+    }
+
+    // --- Collection Forge (Placeholder population) ---
+    const packCardList = document.getElementById('packCardList');
+    if (packCardList) {
+         const samplePackCards = [
+            { title: "Ancient Tome", type: "Arcane", rarity: "Rare", imgSrc: "https://placehold.co/60x69/2C2C44/DAA520?text=AT" },
+            { title: "Griffin Feather", type: "Air", rarity: "Uncommon", imgSrc: "https://placehold.co/60x69/5C4077/DAA520?text=GF" },
+        ];
+        // Clear existing placeholder
+        while (packCardList.children.length > 1) {
+            packCardList.removeChild(packCardList.lastChild);
+        }
+        samplePackCards.forEach(card => {
+            const listItem = document.createElement('div');
+            listItem.className = 'card-list-item';
+            listItem.tabIndex = 0;
+            listItem.innerHTML = `
+                <div class="list-thumbnail hex-card-shape"><img src="${card.imgSrc}" alt="${card.title}"></div>
+                <div class="list-item-info"><h4>${card.title}</h4><p>${card.type} Type, ${card.rarity}</p></div>
+                <input type="checkbox" class="list-checkbox" aria-label="Select ${card.title}">
+            `;
+            packCardList.appendChild(listItem);
+        });
+    }
+    
+    // Initial UI updates
+    updatePreview();
+    if (imageToCrop && imageToCrop.complete && imageToCrop.naturalWidth > 0) {
+         updateCropResultPreview();
+    }
+
+
+});
+</script>
+</body>
+</html>

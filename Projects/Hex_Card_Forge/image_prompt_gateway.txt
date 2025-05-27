@@ -1,0 +1,51 @@
+# Image Prompt: Hex Card Forge - Gateway (Title Screen)
+
+Create a digital illustration showcasing the Gateway screen (title/home screen) of the Hex Card Forge application.
+
+## Visual Style
+- **Art Style**: Dark fantasy/mystical interface with a clean, modern aesthetic
+- **Medium**: Digital UI design illustration
+- **Color Palette**: 
+  * Primary: Rich Byzantine Purple (#4A0072)
+  * Secondary: Goldenrod (#DAA520)
+  * Background: Dark Imperial Blue (#1A1A2E)
+  * Content Areas: Darker (#252538) and slightly lighter (#2C2C44) shades
+  * Text: Light Gray (#E0E0E0) and Medium Gray (#B0B0B0)
+
+## Key Elements to Include
+
+1. **Background Effect**:
+   - Dark imperial blue background with a subtle hexagonal pattern grid
+   - Low opacity, light purple dots at grid intersections
+   - A gentle pulsing animation effect (show this through subtle glow variation)
+
+2. **Title Section**:
+   - Large "HEX CARD FORGE" title text centered in the upper portion of the screen
+   - "HEX" and "CARD" in white/light gray, "FORGE" in gold
+   - Subtitle beneath: "Craft Your Legend, One Hex at a Time" in medium gray
+   - Subtle upward animation effect (show this through a slight blur or motion lines)
+
+3. **Hexagonal Menu Grid**:
+   - Five prominent hexagonal buttons arranged in a loose grid pattern
+   - Each button in rich purple with golden icon at the top
+   - Include these options with appropriate icons:
+     * "Create New Card" (magic wand icon)
+     * "Card Library" (open book icon)
+     * "Booster Packs" (open box icon)
+     * "Design Template" (drafting compass icon)
+     * "Image Tools" (crop tool icon)
+   - One button should appear slightly enlarged/highlighted as if being hovered
+
+4. **Visual Effects**:
+   - Subtle particle or magic dust effects around menu buttons
+   - Gold accent glow on interactive elements
+   - Slight staggered appearance animation for the hex buttons
+   - Depth effect with subtle shadows beneath hexagons
+
+## Mood & Atmosphere
+Create a mystical, arcane gateway that feels like the entrance to a digital grimoire. The interface should be elegant and mysterious, invoking the feeling of beginning a magical crafting journey. The dark background creates a theater-like atmosphere that makes the vibrant hexagonal menu options the stars of the show.
+
+## Additional Notes
+- Show the screen in a desktop aspect ratio (16:9)
+- Include subtle motion hints or animation frames to suggest interactivity
+- The UI should feel polished and premium while maintaining the arcane aesthetic

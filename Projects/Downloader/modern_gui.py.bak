@@ -1,0 +1,1830 @@
+import sys
+import os
+import time
+import pathlib
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+    QPushButton, QLineEdit, QComboBox, QCheckBox, QFrame, QScrollArea,
+    QGridLayout, QProgressBar, QFileDialog, QMessageBox, QSpinBox,
+    QGraphicsDropShadowEffect, QGroupBox, QFormLayout, QRadioButton, QTabWidget,
+    QToolButton, QSpacerItem, QSizePolicy, QDialog
+)
+from PySide6.QtCore import QTimer, Qt, Signal, QSize, QThread, Slot, QUrl
+from PySide6.QtGui import QIcon, QFont, QPalette, QColor, QPixmap, QPainter, QBrush, QDesktopServices
+
+# Import custom modules
+from gui_backend import GUIBackend
+import theme as app_theme
+
+# Worker classes (stub if not present)
+class SearchWorker(QThread):
+    results_ready = Signal(list)
+    error = Signal(str)
+    def __init__(self, backend, query_params):
+        super().__init__()
+        self.backend = backend
+        self.query_params = query_params
+    def run(self):
+# CSS code removed - use theme.py for styling
+class DownloadWorker(QThread):
+    progress = Signal(int)
+    finished = Signal()
+    def __init__(self, backend, download_items):
+        super().__init__()
+        self.backend = backend
+        self.download_items = download_items
+    def run(self):
+        try:
+            self.backend.start_download(self.download_items)
+            self.progress.emit(100)
+        finally:
+            self.finished.emit()
+
+# Use theme.py for all theme/color references
+# (Removed invalid raw QSS block from top-level scope)
+
+
+
+
+
+
+
+            
+
+
+
+
+
+            
+
+
+                
+
+
+
+            
+
+
+
+
+            
+
+
+
+
+
+            
+
+
+
+
+
+            
+            
+
+                
+
+            
+            
+            
+
+
+                
+                
+
+
+            
+            
+                
+
+
+            
+            
+            
+                
+                
+
+                
+
+            
+            
+                
+                
+
+            
+            
+            
+
+
+                
+
+            
+            
+                
+                
+                
+                
+
+            
+            
+                
+                
+                
+
+            
+            
+                
+
+            
+            
+                
+                
+                
+
+            
+            
+                
+                
+                
+                
+
+            
+            # CSS code removed - use theme.py for styling
+
+            """
+                border_divider = app_theme.DARK_BORDER_DIVIDER_COLOR
+            else:
+                bg = app_theme.BACKGROUND_COLOR
+                surface = app_theme.SURFACE_COLOR
+                text_primary = app_theme.TEXT_PRIMARY_COLOR
+                text_secondary = app_theme.TEXT_SECONDARY_COLOR
+                border_divider = app_theme.BORDER_DIVIDER_COLOR
+                
+            primary = app_theme.PRIMARY_COLOR
+            secondary = app_theme.SECONDARY_COLOR
+            error = app_theme.ERROR_COLOR
+            success = app_theme.SUCCESS_COLOR
+            
+            return f"""
+            /* Global styles */
+            QWidget {{ 
+                 
+
+                font-family: 'Inter', 'Segoe UI', 'Arial', sans-serif;
+
+            
+            QMainWindow, QDialog {{  }}
+            
+            /* Form elements */
+            QLineEdit, QTextEdit, QComboBox, QSpinBox {{ 
+
+
+
+                padding: 8px;
+
+
+            
+            QLineEdit:focus, QTextEdit:focus, QComboBox:focus {{ 
+                border: 2px solid {primary}; 
+
+            
+            /* Buttons */
+            QPushButton {{ 
+                
+
+
+
+
+
+            
+            QPushButton:hover {{
+                background-color: rgba(0, 0, 0, 0.05);
+
+            
+            QPushButton:pressed {{
+                background-color: rgba(0, 0, 0, 0.1);
+
+            
+            QPushButton#primaryButton {{{{
+                
+
+                
+}}
+            
+            QPushButton#primaryButton:hover {{{{
+                
+                opacity: 0.9;
+}}
+            
+            QPushButton#cancelButton {{{{
+                background-color: {error};
+
+                
+}}
+            
+            /* Tabs */
+            QTabWidget::pane {{{{
+
+
+                top: -1px;
+                
+}}
+            
+            QTabBar::tab {{{{
+                
+
+                border-bottom: none;
+
+
+
+
+
+
+            
+
+
+
+
+
+            
+
+
+                
+
+
+
+            
+
+
+
+
+            
+
+
+
+
+
+            
+
+
+
+
+
+            
+            
+
+                
+
+            
+            
+            
+
+
+                
+                
+
+
+            
+            
+                
+
+
+            
+            
+            
+                
+                
+
+                
+
+            
+            
+                
+                
+
+            
+            
+            
+
+
+                
+
+            
+            
+                
+                
+                
+                
+
+            
+            
+                
+                
+                
+
+            
+            
+                
+
+            
+            
+                
+                
+                
+
+            
+            
+                
+                
+                
+                
+
+            
+            # CSS code removed - use theme.py for styling
+
+            """
+                selected_tab_border = app_theme.SECONDARY_COLOR
+                button_bg = app_theme.SECONDARY_COLOR
+                button_text = app_theme.DARK_BACKGROUND_COLOR
+                button_hover_bg = "#e0a800" # Darker yellow
+                input_bg = app_theme.DARK_SURFACE_COLOR
+                input_border_focus = app_theme.SECONDARY_COLOR
+            else:
+                bg = app_theme.BACKGROUND_COLOR
+                surface = app_theme.SURFACE_COLOR
+                text_primary = app_theme.TEXT_PRIMARY_COLOR
+                text_secondary = app_theme.TEXT_SECONDARY_COLOR
+                border = app_theme.BORDER_DIVIDER_COLOR
+                selected_tab_bg = app_theme.PRIMARY_COLOR
+                selected_tab_text = "#FFFFFF"
+                selected_tab_border = app_theme.PRIMARY_COLOR
+                button_bg = app_theme.PRIMARY_COLOR
+                button_text = "#FFFFFF"
+                button_hover_bg = "#7b1fa2" # Darker purple
+                input_bg = app_theme.SURFACE_COLOR
+                input_border_focus = app_theme.PRIMARY_COLOR
+
+            return f"""
+                QMainWindow, QDialog {{
+                    
+    
+                QWidget {{
+    
+                    font-family: Inter;
+    
+                QGroupBox {{
+                    
+                    border: 1px solid {border};
+    
+                    margin-top: 10px; /* Space for title */
+                    padding: 10px;
+    
+                QGroupBox::title {{
+                    subcontrol-origin: margin;
+                    subcontrol-position: top left;
+                    padding: 0 5px 5px 5px;
+    
+    
+    
+                QLabel {{
+                    background-color: transparent; /* Ensure labels don't have odd backgrounds */
+    
+                QLineEdit, QSpinBox, QComboBox {{
+                    background-color: {input_bg};
+                    border: 1px solid {border};
+                    
+                    padding: 8px;
+    
+    
+                QLineEdit:focus, QSpinBox:focus, QComboBox:focus {{
+                    border: 1px solid {input_border_focus};
+                    /* ring effect is hard with QSS, border change is common */
+    
+                QComboBox::drop-down {{
+                    
+    
+                QComboBox::down-arrow {{
+                    /* Consider using a custom SVG icon here if possible */
+                    image: url({app_theme.ICON_PATH}chevron-down{"-white" if dark_mode else ""}.png); 
+                    
+                    
+                    margin-right: 5px;
+    
+                QPushButton {{
+                    background-color: {button_bg};
+                    color: {button_text};
+                    
+                    
+    
+    
+    
+                QPushButton:hover {{
+                    background-color: {button_hover_bg};
+    
+                QPushButton:pressed {{
+                    background-color: {button_bg}; /* Or a slightly darker shade */
+    
+                QPushButton:disabled {{
+                    background-color: {text_secondary if dark_mode else "#cccccc"};
+                    color: {text_primary if dark_mode else "#999999"};
+    
+                QCheckBox::indicator {{
+                    width: 16px;
+                    height: 16px;
+    
+    
+                QCheckBox::indicator:unchecked {{
+                    background-color: {input_bg};
+                    border: 1px solid {border};
+    
+                QCheckBox::indicator:checked {{
+                    background-color: {app_theme.PRIMARY_COLOR if not dark_mode else app_theme.SECONDARY_COLOR};
+                    border: 1px solid {app_theme.PRIMARY_COLOR if not dark_mode else app_theme.SECONDARY_COLOR};
+                    /* image: url({app_theme.ICON_PATH}check{"-white" if dark_mode else ""}.png); */ /* For custom checkmark */
+    
+                 QRadioButton::indicator {{
+                    width: 16px;
+                    height: 16px;
+    
+    
+                QRadioButton::indicator:unchecked {{
+                    background-color: {input_bg};
+                    border: 1px solid {border};
+    
+                QRadioButton::indicator:checked {{
+                    background-color: {app_theme.PRIMARY_COLOR if not dark_mode else app_theme.SECONDARY_COLOR};
+                    border: 1px solid {app_theme.PRIMARY_COLOR if not dark_mode else app_theme.SECONDARY_COLOR};
+                    /* image: url({app_theme.ICON_PATH}radio-dot{"-white" if dark_mode else ""}.png); */
+    
+                QTabWidget::pane {{
+                    border-top: 1px solid {border};
+                    
+    
+                QTabBar::tab {{
+                    background-color: {surface if dark_mode else bg};
+    
+                    padding: 10px 15px;
+                    border: 1px solid {border};
+                    border-bottom: none; /* Pane border acts as bottom */
+                    border-top-left-radius: 6px;
+                    border-top-right-radius: 6px;
+    
+    
+                QTabBar::tab:selected {{
+                     /* Pane background */
+                    color: {selected_tab_bg}; /* Accent color for text */
+                    border: 1px solid {border};
+                    border-bottom: 2px solid {selected_tab_border}; /* Highlight border */
+    
+    
+                QTabBar::tab:hover:!selected {{
+                    background-color: {input_bg}; /* Slightly different hover */
+    
+                QScrollArea {{
+                    
+                    
+    
+                QProgressBar {{
+                    border: 1px solid {border};
+                    border-radius: 5px;
+                    
+    
+    
+                QProgressBar::chunk {{
+                    background-color: {app_theme.PRIMARY_COLOR if not dark_mode else app_theme.SECONDARY_COLOR};
+    
+                    margin: 0.5px;
+    
+                #headerFrame {{
+                    
+                    border-bottom: 1px solid {border};
+    
+                #resultCardFrame {{
+                    
+                    border: 1px solid {border};
+    
+    
+                #resultCardFrame:hover {{
+                     /* Add shadow or border change if desired */
+    
+                #nsfwBadgeLabel {{
+                    background-color: {app_theme.ERROR_COLOR};
+    
+                    padding: 2px 5px;
+    
+                    font-size: 9pt;
+    
+    
+                #themeToggleButton {{
+                    background-color: transparent;
+                    
+                    padding: 5px;
+    
+                #statusBar {{
+    
+    
+            """
+
+class ResultsViewWidget(QWidget):
+    """A widget to display a single result card with NSFW handling."""
+    selection_changed = Signal(bool)
+
+    def __init__(self, title, subreddit, upvotes, media_type, image_url, is_nsfw=False, parent=None):
+        super().__init__(parent)
+        self.is_nsfw = is_nsfw
+        self.is_revealed = not is_nsfw  # SFW content is always revealed
+        self.image_url = image_url # Store for later use
+
+        self.setMinimumWidth(200)
+        self.setMaximumWidth(250) # Control card width
+
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0) # Frame will handle margins
+
+        self.card_frame = QFrame()
+        self.card_frame.setObjectName("resultCardFrame")
+        self.card_frame.setFrameShape(QFrame.Shape.StyledPanel)
+        self.card_frame.setFrameShadow(QFrame.Shadow.Raised) 
+        card_layout = QVBoxLayout(self.card_frame)
+        card_layout.setSpacing(8)
+
+        # Thumbnail Area
+        self.thumbnail_container = QFrame() 
+        self.thumbnail_container.setFixedSize(180, 100) 
+        self.thumbnail_container.setObjectName("thumbnailContainer")
+        thumbnail_stack_layout = QVBoxLayout(self.thumbnail_container) 
+        thumbnail_stack_layout.setContentsMargins(0,0,0,0)
+
+        self.thumbnail_label = QLabel()
+        self.thumbnail_label.setAlignment(Qt.AlignCenter)
+        self.thumbnail_label.setScaledContents(False) 
+        self._set_placeholder_pixmap("Loading...")
+        thumbnail_stack_layout.addWidget(self.thumbnail_label)
+
+        self.nsfw_overlay_widget = QWidget(self.thumbnail_container)
+        self.nsfw_overlay_widget.setObjectName("nsfwOverlay")
+        overlay_layout = QVBoxLayout(self.nsfw_overlay_widget)
+        overlay_layout.setAlignment(Qt.AlignCenter)
+        overlay_layout.setContentsMargins(5,5,5,5)
+        
+        self.nsfw_icon_label = QLabel()
+        self.nsfw_icon_label.setText("🔒") 
+        self.nsfw_icon_label.setAlignment(Qt.AlignCenter)
+        
+        self.reveal_button = QPushButton("Click to reveal")
+        self.reveal_button.setObjectName("revealButton") 
+        self.reveal_button.clicked.connect(self.toggle_reveal)
+        
+        overlay_layout.addWidget(self.nsfw_icon_label)
+        overlay_layout.addWidget(self.reveal_button)
+        self.nsfw_overlay_widget.setVisible(False) 
+        
+        self.nsfw_overlay_widget.setGeometry(0,0, self.thumbnail_container.width(), self.thumbnail_container.height())
+        self.nsfw_overlay_widget.raise_()
+
+
+        card_layout.addWidget(self.thumbnail_container, 0, Qt.AlignCenter)
+
+        # Info Area
+        info_widget = QWidget()
+        info_layout = QVBoxLayout(info_widget)
+        info_layout.setSpacing(3)
+
+        self.title_label = QLabel(title)
+        self.title_label.setFont(QFont("Inter", 10, QFont.Weight.Bold))
+        self.title_label.setWordWrap(True)
+        info_layout.addWidget(self.title_label)
+
+        details_text = f"{subreddit} • {media_type} • {upvotes}"
+        if self.is_nsfw: 
+            details_text += " <font color='red'>(NSFW)</font>"
+
+        self.details_label = QLabel(details_text)
+        self.details_label.setFont(QFont("Inter", 8))
+        self.details_label.setWordWrap(True)
+        info_layout.addWidget(self.details_label)
+        
+        card_layout.addWidget(info_widget)
+
+
+        self.select_checkbox = QCheckBox("Select for download")
+        self.select_checkbox.toggled.connect(self.selection_changed.emit)
+        card_layout.addWidget(self.select_checkbox, 0, Qt.AlignCenter)
+        
+        main_layout.addWidget(self.card_frame)
+        self.update_thumbnail_display() 
+
+        # Add shadow effect
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(15)
+        shadow.setColor(QColor(0, 0, 0, 80))
+        shadow.setOffset(0, 2)
+        self.card_frame.setGraphicsEffect(shadow)
+
+
+    def _set_placeholder_pixmap(self, text="Placeholder"):
+        pixmap = QPixmap(self.thumbnail_container.size())
+        pixmap.fill(QColor("#e0e0e0")) 
+        painter = QPainter(pixmap)
+        painter.setPen(QColor("#666666"))
+        painter.setFont(QFont("Inter", 10))
+        painter.drawText(pixmap.rect(), Qt.AlignCenter, text)
+        painter.end()
+        self.thumbnail_label.setPixmap(pixmap)
+
+    def toggle_reveal(self):
+        self.is_revealed = not self.is_revealed
+        self.update_thumbnail_display()
+
+    def update_thumbnail_display(self):
+        if self.is_nsfw:
+            self.nsfw_overlay_widget.setVisible(not self.is_revealed)
+            if self.is_revealed:
+                self._set_placeholder_pixmap("NSFW (Revealed)") 
+                # TODO: Load actual image self.thumbnail_label.setPixmap(QPixmap(self.image_url))
+                self.reveal_button.setText("Hide")
+            else:
+                self._set_placeholder_pixmap("NSFW (Blurred)") 
+                self.reveal_button.setText("Reveal")
+        else: 
+            self._set_placeholder_pixmap("SFW Content") 
+            self.nsfw_overlay_widget.setVisible(False)
+
+    def set_selected(self, selected):
+        self.select_checkbox.setChecked(selected)
+
+    def is_selected(self):
+        return self.select_checkbox.isChecked()
+
+
+class DownloadWorker(QThread):
+    """Thread worker for handling downloads"""
+    progress_updated = Signal(str, int, str)
+    download_completed = Signal(str, bool, str)
+    
+    def __init__(self, backend, download_ids):
+        super().__init__()
+        self.backend = backend
+        self.download_ids = download_ids
+        self.is_running = True
+        
+    def run(self):
+        """Main download loop"""
+        # Process all download IDs in the queue
+        while self.is_running and self.download_ids:
+            # Get the first download ID from the queue
+            download_id = self.download_ids[0]
+            
+            # Check status every 0.5 seconds and update progress
+            success = False
+            while self.is_running:
+                # Get current status from backend
+                status_data = self.backend.get_queue_status()
+                
+                # Find our download
+                current_item = None
+                for item in status_data:
+                    if item.get('download_id') == download_id:
+                        current_item = item
+                        break
+                
+                if not current_item:
+                    # Download might be completed or removed from queue
+                    break
+                    
+                # Update progress
+                progress = current_item.get('progress', 0)
+                status = current_item.get('status', 'Queued')
+                self.progress_updated.emit(download_id, progress, status)
+                
+                # Check if download completed
+                if status in ['Completed', 'Failed', 'Cancelled']:
+                    success = status == 'Completed'
+                    message = current_item.get('message', 'Download completed' if success else 'Download failed')
+                    break
+                    
+                # Sleep before checking again
+                time.sleep(0.5)
+            
+            # Emit completion signal
+            if self.is_running:
+                message = 'Download completed successfully' if success else 'Download failed'
+                self.download_completed.emit(download_id, success, message)
+                
+                # Remove from our processing queue
+                if download_id in self.download_ids:
+                    self.download_ids.remove(download_id)
+            
+    def stop(self):
+        """Stop the download worker"""
+        self.is_running = False
+
+
+class ModernMainWindow(QMainWindow):
+    theme_changed_signal = Signal(bool)
+    
+    def _load_reddit_credentials(self):
+        """Load Reddit credentials from config and populate the UI fields"""
+        if not hasattr(self, 'backend') or not self.backend:
+            return
+            
+        # Get config from backend
+        config = self.backend.config
+        if 'reddit' in config:
+            # Update UI fields if they exist
+            if hasattr(self, 'client_id_input') and self.client_id_input is not None:
+                self.client_id_input.setText(config['reddit'].get('client_id', ''))
+            if hasattr(self, 'client_secret_input') and self.client_secret_input is not None:
+                self.client_secret_input.setText(config['reddit'].get('client_secret', ''))
+                
+            # Update connection status
+            if hasattr(self, 'reddit_status_label') and self.reddit_status_label is not None:
+                if self.backend.reddit:
+                    if hasattr(self.backend.reddit._core._requestor._http, 'is_mocked') and \
+                       self.backend.reddit._core._requestor._http.is_mocked:
+                        self.reddit_status_label.setText("<font color='orange'>Connected (Mock Mode)</font>")
+                    else:
+                        self.reddit_status_label.setText("<font color='green'>Connected</font>")
+                else:
+                    self.reddit_status_label.setText("<font color='red'>Disconnected</font>")
+    
+    def save_and_connect_reddit(self):
+        """Save Reddit credentials and connect to Reddit API"""
+        if not hasattr(self, 'backend') or not self.backend:
+            return
+            
+        # Get credentials from UI
+        client_id = self.client_id_input.text().strip() if hasattr(self, 'client_id_input') else ''
+        client_secret = self.client_secret_input.text().strip() if hasattr(self, 'client_secret_input') else ''
+        
+        if not client_id or not client_secret:
+            QMessageBox.warning(self, "Input Error", "Please enter both Client ID and Client Secret.")
+            return
+            
+        # Try to connect with real credentials (non-mock mode)
+        self.statusBar().showMessage("Connecting to Reddit API...")
+        success = self.backend.connect_to_reddit(mock=False, client_id=client_id, client_secret=client_secret)
+        
+        if success:
+            if hasattr(self, 'reddit_status_label') and self.reddit_status_label is not None:
+                self.reddit_status_label.setText("<font color='green'>Connected</font>")
+            self.statusBar().showMessage("Successfully connected to Reddit API.", 3000)
+            
+            # Save settings
+            settings = {"allow_nsfw": self.nsfw_filter_toggle.isChecked() if hasattr(self, 'nsfw_filter_toggle') else True}
+            self.backend.save_settings(settings)
+        else:
+            if hasattr(self, 'reddit_status_label') and self.reddit_status_label is not None:
+                self.reddit_status_label.setText("<font color='red'>Connection Failed</font>")
+            self.statusBar().showMessage("Failed to connect to Reddit API.", 3000)
+            QMessageBox.critical(self, "Connection Error", "Failed to connect to Reddit API. Please check your credentials.")
+
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Reddit Media Grabber")
+        self.setGeometry(100, 100, 1350, 950) 
+        self.current_theme = 'light'  
+        self.result_widgets = [] 
+        
+        # Initialize UI element references to None to prevent AttributeError
+        self.nsfw_filter_toggle = None
+        self.theme_toggle_button = None
+        self.light_theme_radio = None
+        self.dark_theme_radio = None
+        self.system_theme_radio = None
+        self.select_all_button = None
+        self.download_selected_button = None
+        self.results_scroll_area = None
+        self.results_grid_widget = None
+        self.results_grid_layout = None
+        self.results_empty_state_label = None
+        self.synced_subs_list_widget_container = None
+        self.synced_subs_list_layout = None
+        self.synced_subs_empty_label = None
+        self.queue_items_widget = None
+        self.queue_items_layout = None
+        self.queue_empty_label = None
+        self.history_items_widget = None
+        self.history_items_layout = None
+        self.history_empty_label = None
+        
+        # Initialize backend integration
+        self.backend = GUIBackend()
+        
+        # Initialize worker threads
+        self.download_worker = None
+        self.search_worker = None
+        
+        # Load Reddit credentials from config if available
+        self._load_reddit_credentials()
+        
+        # Dictionary to track download items in the UI
+        self.download_items = {}
+
+        self.init_ui()
+        self.set_theme(self.current_theme)
+        
+        # Initialize queue with current status
+        self.refresh_queue_and_history()
+    
+    def refresh_queue_and_history(self):
+        """Refresh the download queue and history from the backend"""
+        if not hasattr(self, 'backend') or not self.backend:
+            return
+            
+        # Clear existing items
+        self._clear_queue()
+        self._clear_history()
+        
+        # Get queue and history from backend
+        queue_items = self.backend.get_queue_status()
+        history_items = self.backend.get_download_history()
+        
+        # Add queue items to UI
+        for index, item in enumerate(queue_items):
+            self._add_download_to_queue(item, index)
+            
+        # Add history items to UI
+        for item in history_items:
+            self._add_to_history(item)
+            
+        # Update visibility
+        self._update_queue_visibility()
+        self._update_history_visibility()
+        
+    def _clear_queue(self):
+        # Clear the download queue UI
+        if not hasattr(self, 'queue_items_layout') or self.queue_items_layout is None:
+            return
+            
+        # Remove all widgets from layout
+        while self.queue_items_layout.count() > 0:
+            item = self.queue_items_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+        
+        # Clear download items dictionary
+        self.download_items = {}
+                
+    def _clear_history(self):
+        # Clear the download history UI
+        if not hasattr(self, 'history_items_layout') or self.history_items_layout is None:
+            return
+            
+        # Remove all widgets from layout
+        while self.history_items_layout.count() > 0:
+            item = self.history_items_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
+    
+    def _update_download_progress(self, download_id, progress, status):
+        """Update the progress of a download item"""
+        if download_id not in self.download_items:
+            return
+            
+        # Update progress bar and status label
+        progress_bar = self.download_items.get(f"{download_id}_progress")
+        status_label = self.download_items.get(f"{download_id}_status")
+        
+        if progress_bar and hasattr(progress_bar, 'setValue'):
+            progress_bar.setValue(progress)
+            
+        if status_label and hasattr(status_label, 'setText'):
+            status_label.setText(status)
+            
+        # Update color based on status
+        if 'error' in status.lower() or 'fail' in status.lower():
+            if status_label:
+                status_label.setStyleSheet(f"color: {app_theme.ERROR_COLOR};")
+        elif 'complete' in status.lower() or 'success' in status.lower():
+            if status_label:
+                status_label.setStyleSheet(f"color: {app_theme.SUCCESS_COLOR};")
+
+
+    def _handle_download_completed(self, download_id, success, message):
+        """Handle download completion"""
+        if download_id in self.download_items:
+            item = self.download_items[download_id]
+            item_data = item["data"]
+            
+            # Update UI
+            if success:
+                item["status_label"].setText("Completed")
+                item["progress_bar"].setValue(100)
+                
+                # Add to history
+                self._add_to_history(item_data)
+                
+                # Show notification if enabled
+                if hasattr(self, 'show_notifications_checkbox') and self.show_notifications_checkbox.isChecked():
+                    QMessageBox.information(self, "Download Complete", 
+                                          f"Download of '{item_data['title']}' completed successfully.")
+            else:
+                item["status_label"].setText("Failed")
+                
+                # Show error notification
+                QMessageBox.warning(self, "Download Failed", 
+                                   f"Download of '{item_data['title']}' failed: {message}")
+            
+            # Remove from queue after a delay
+            QTimer.singleShot(2000, lambda: self._remove_from_queue(item["widget"]))
+            
+            # Remove from download_items dictionary
+            self.download_items.pop(download_id, None)
+
+
+    def _cancel_download(self, download_id):
+        """Cancel a download"""
+        # Cancel the download through the backend
+        if hasattr(self, 'backend') and self.backend:
+            success = self.backend.cancel_download(download_id)
+            
+            if success:
+                # Update UI
+                self._update_download_progress(download_id, 0, "Cancelled")
+                
+                # Update status label color
+                status_label = self.download_items.get(f"{download_id}_status")
+                if status_label:
+                    status_label.setStyleSheet("color: orange;")
+                    
+                # Refresh the queue and history
+                self.refresh_queue_and_history()
+                
+                # Show message
+                self.statusBar().showMessage("Download cancelled", 3000)
+            else:
+                # Show error
+                self.statusBar().showMessage("Failed to cancel download", 3000)
+
+
+    def browse_download_directory(self):
+        """Open a file dialog to select download directory"""
+        if hasattr(self, 'download_dir_input') and self.download_dir_input is not None:
+            # Get current directory
+            current_dir = self.download_dir_input.text()
+            if not current_dir:
+                current_dir = os.path.expanduser("~")  # Default to home directory
+                
+            # Open directory selection dialog
+            new_dir = QFileDialog.getExistingDirectory(self, "Select Download Directory", current_dir)
+            
+            if new_dir:  # User selected a directory
+                # Update input field
+                self.download_dir_input.setText(new_dir)
+                
+                # Save to settings
+                if hasattr(self, 'backend') and self.backend:
+                    settings = {"download_dir": new_dir}
+                    self.backend.save_settings(settings)
+                    self.statusBar().showMessage(f"Download directory set to: {new_dir}", 3000)
+                    
+    def init_ui(self):
+        """Initialize the user interface"""
+        # Main layout setup
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QVBoxLayout(central_widget)
+        
+        # Create status bar
+        self.statusBar().showMessage("Ready")
+        
+        # Create main tab widget for different sections
+        main_tabs = QTabWidget()
+        main_tabs.setObjectName("mainTabs")
+        
+        # Create tabs
+        search_tab = QWidget()
+        queue_tab = QWidget()
+        settings_tab = QWidget()
+        
+        # Add tabs to tab widget
+        main_tabs.addTab(search_tab, "Search")
+        main_tabs.addTab(queue_tab, "Downloads")
+        main_tabs.addTab(settings_tab, "Settings")
+        
+        # Setup tab layouts
+        search_layout = QVBoxLayout(search_tab)
+        queue_layout = QVBoxLayout(queue_tab)
+        settings_layout = QVBoxLayout(settings_tab)
+        
+        # --- Setup Search Tab ---
+        # Search form layout
+        search_form_container = QWidget()
+        search_form_container.setObjectName("searchFormContainer")
+        search_form_layout = QFormLayout(search_form_container)
+        search_form_layout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
+        search_form_layout.setHorizontalSpacing(10)
+        search_form_layout.setVerticalSpacing(15)
+        
+        # Keyword input
+        self.keyword_input = QLineEdit()
+        self.keyword_input.setPlaceholderText("Enter search terms...")
+        self.keyword_input.returnPressed.connect(self.start_search)
+        search_form_layout.addRow("Keywords:", self.keyword_input)
+        
+        # Media type selection
+        self.media_type_combo = QComboBox()
+        self.media_type_combo.addItems(["All", "Images", "Videos", "GIFs", "Articles"])
+        search_form_layout.addRow("Media Type:", self.media_type_combo)
+        
+        # Sort options
+        self.sort_combo = QComboBox()
+        self.sort_combo.addItems(["Relevance", "Hot", "New", "Top", "Comments"])
+        search_form_layout.addRow("Sort By:", self.sort_combo)
+        
+        # Time filter
+        self.time_filter_combo = QComboBox()
+        self.time_filter_combo.addItems(["All Time", "Day", "Week", "Month", "Year"])
+        search_form_layout.addRow("Time Period:", self.time_filter_combo)
+        
+        # NSFW filter toggle
+        self.nsfw_filter_toggle = QCheckBox("Allow NSFW Content")
+        search_form_layout.addRow("", self.nsfw_filter_toggle)
+        
+        # Limit input
+        self.limit_input = QSpinBox()
+        self.limit_input.setRange(10, 500)
+        self.limit_input.setValue(50)
+        self.limit_input.setSingleStep(10)
+        search_form_layout.addRow("Results Limit:", self.limit_input)
+        
+        # Search button
+        self.search_button = QPushButton("Search")
+        self.search_button.setObjectName("primaryButton")
+        self.search_button.clicked.connect(self.start_search)
+        search_form_layout.addRow("", self.search_button)
+        
+        # Add the form to the search layout
+        search_layout.addWidget(search_form_container)
+        
+        # Results area
+        results_container = QWidget()
+        results_container.setObjectName("resultsContainer")
+        results_layout = QVBoxLayout(results_container)
+        
+        # Results header
+        results_header = QWidget()
+        results_header_layout = QHBoxLayout(results_header)
+        results_header_layout.setContentsMargins(0, 0, 0, 10)
+        
+        self.results_label = QLabel("Search Results:")
+        self.results_label.setObjectName("sectionTitle")
+        results_header_layout.addWidget(self.results_label)
+        
+        self.results_count_label = QLabel("0 results")
+        results_header_layout.addWidget(self.results_count_label, 0, Qt.AlignRight)
+        
+        results_layout.addWidget(results_header)
+        
+        # Results actions
+        results_actions = QWidget()
+        results_actions_layout = QHBoxLayout(results_actions)
+        results_actions_layout.setContentsMargins(0, 0, 0, 10)
+        
+        self.select_all_button = QPushButton("Select All")
+        self.select_all_button.clicked.connect(self.toggle_select_all)
+        results_actions_layout.addWidget(self.select_all_button)
+        
+        self.download_selected_button = QPushButton("Download Selected")
+        self.download_selected_button.setObjectName("primaryButton")
+        self.download_selected_button.clicked.connect(self.download_selected)
+        results_actions_layout.addWidget(self.download_selected_button)
+        
+        # Initially disable these buttons
+        self.select_all_button.setEnabled(False)
+        self.download_selected_button.setEnabled(False)
+        
+        results_layout.addWidget(results_actions)
+        
+        # Scrollable results grid
+        self.results_scroll_area = QScrollArea()
+        self.results_scroll_area.setWidgetResizable(True)
+        self.results_scroll_area.setObjectName("resultsScrollArea")
+        
+        self.results_grid_widget = QWidget()
+        self.results_grid_layout = QGridLayout(self.results_grid_widget)
+        self.results_grid_layout.setContentsMargins(5, 5, 5, 5)
+        self.results_grid_layout.setSpacing(15)
+        
+        # Empty state label
+        self.results_empty_state_label = QLabel("Search for media to see results here")
+        self.results_empty_state_label.setAlignment(Qt.AlignCenter)
+        self.results_empty_state_label.setObjectName("emptyStateLabel")
+        self.results_grid_layout.addWidget(self.results_empty_state_label, 0, 0, 1, 4, Qt.AlignCenter)
+        
+        self.results_scroll_area.setWidget(self.results_grid_widget)
+        results_layout.addWidget(self.results_scroll_area)
+        
+        # Add results container to search layout
+        search_layout.addWidget(results_container)
+        
+        # --- Setup Queue Tab ---
+        # Create tabs for Queue and History
+        queue_tabs = QTabWidget()
+        queue_tabs.setObjectName("queueTabs")
+        
+        # Queue tab
+        queue_inner_tab = QWidget()
+        queue_inner_layout = QVBoxLayout(queue_inner_tab)
+        
+        # Queue header
+        queue_header = QLabel("Download Queue")
+        queue_header.setObjectName("sectionTitle")
+        queue_inner_layout.addWidget(queue_header)
+        
+        # Queue items
+        self.queue_items_widget = QWidget()
+        self.queue_items_layout = QVBoxLayout(self.queue_items_widget)
+        self.queue_items_layout.setSpacing(10)
+        
+        # Empty state for queue
+        self.queue_empty_label = QLabel("No items in download queue")
+        self.queue_empty_label.setAlignment(Qt.AlignCenter)
+        self.queue_empty_label.setObjectName("emptyStateLabel")
+        self.queue_items_layout.addWidget(self.queue_empty_label)
+        
+        queue_inner_layout.addWidget(self.queue_items_widget)
+        
+        # History tab
+        history_tab = QWidget()
+        history_layout = QVBoxLayout(history_tab)
+        
+        # History header
+        history_header = QLabel("Download History")
+        history_header.setObjectName("sectionTitle")
+        history_layout.addWidget(history_header)
+        
+        # History items
+        self.history_items_widget = QWidget()
+        self.history_items_layout = QVBoxLayout(self.history_items_widget)
+        self.history_items_layout.setSpacing(10)
+        
+        # Empty state for history
+        self.history_empty_label = QLabel("No download history")
+        self.history_empty_label.setAlignment(Qt.AlignCenter)
+        self.history_empty_label.setObjectName("emptyStateLabel")
+        self.history_items_layout.addWidget(self.history_empty_label)
+        
+        history_layout.addWidget(self.history_items_widget)
+        
+        # Add tabs to queue tabs
+        queue_tabs.addTab(queue_inner_tab, "Queue")
+        queue_tabs.addTab(history_tab, "History")
+        
+        # Add queue tabs to queue layout
+        queue_layout.addWidget(queue_tabs)
+        
+        # --- Setup Settings Tab ---
+        # Create sections for settings
+        settings_sections = QVBoxLayout()
+        settings_sections.setSpacing(20)
+        
+        # Reddit API Settings Section
+        reddit_api_section = QGroupBox("Reddit API Settings")
+        reddit_api_layout = QFormLayout(reddit_api_section)
+        
+        # Client ID input
+        self.client_id_input = QLineEdit()
+        self.client_id_input.setPlaceholderText("Enter your Reddit API Client ID")
+        reddit_api_layout.addRow("Client ID:", self.client_id_input)
+        
+        # Client Secret input
+        self.client_secret_input = QLineEdit()
+        self.client_secret_input.setPlaceholderText("Enter your Reddit API Client Secret")
+        self.client_secret_input.setEchoMode(QLineEdit.EchoMode.Password)
+        reddit_api_layout.addRow("Client Secret:", self.client_secret_input)
+        
+        # Status indicator
+        self.reddit_status_label = QLabel("Not Connected")
+        reddit_api_layout.addRow("Status:", self.reddit_status_label)
+        
+        # Connect button
+        self.connect_button = QPushButton("Connect to Reddit API")
+        self.connect_button.setObjectName("primaryButton")
+        self.connect_button.clicked.connect(self.save_and_connect_reddit)
+        reddit_api_layout.addRow("", self.connect_button)
+        
+        # Mock mode checkbox
+        self.mock_mode_checkbox = QCheckBox("Use Mock Mode (for testing)")
+        self.mock_mode_checkbox.toggled.connect(self.toggle_mock_mode)
+        reddit_api_layout.addRow("", self.mock_mode_checkbox)
+        
+        # Download Settings Section
+        download_settings_section = QGroupBox("Download Settings")
+        download_settings_layout = QFormLayout(download_settings_section)
+        
+        # Download directory input
+        download_dir_widget = QWidget()
+        download_dir_layout = QHBoxLayout(download_dir_widget)
+        download_dir_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.download_dir_input = QLineEdit()
+        self.download_dir_input.setPlaceholderText("Select download directory")
+        self.download_dir_input.setText(os.path.expanduser("~/Downloads"))
+        download_dir_layout.addWidget(self.download_dir_input)
+        
+        browse_button = QPushButton("Browse...")
+        browse_button.clicked.connect(self.browse_download_directory)
+        download_dir_layout.addWidget(browse_button)
+        
+        download_settings_layout.addRow("Download Directory:", download_dir_widget)
+        
+        # Max concurrent downloads
+        self.max_downloads_spinner = QSpinBox()
+        self.max_downloads_spinner.setRange(1, 10)
+        self.max_downloads_spinner.setValue(4)
+        download_settings_layout.addRow("Max Concurrent Downloads:", self.max_downloads_spinner)
+        
+        # Notification settings
+        self.show_notifications_checkbox = QCheckBox("Show download notifications")
+        self.show_notifications_checkbox.setChecked(True)
+        download_settings_layout.addRow("", self.show_notifications_checkbox)
+        
+        # UI Settings Section
+        ui_settings_section = QGroupBox("UI Settings")
+        ui_settings_layout = QFormLayout(ui_settings_section)
+        
+        # Theme settings
+        theme_widget = QWidget()
+        theme_layout = QHBoxLayout(theme_widget)
+        theme_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.light_theme_radio = QRadioButton("Light")
+        self.dark_theme_radio = QRadioButton("Dark")
+        self.system_theme_radio = QRadioButton("System")
+        
+        # Set default to light theme
+        self.light_theme_radio.setChecked(True)
+        
+        # Connect theme signals
+        self.light_theme_radio.toggled.connect(lambda: self.set_theme('light') if self.light_theme_radio.isChecked() else None)
+        self.dark_theme_radio.toggled.connect(lambda: self.set_theme('dark') if self.dark_theme_radio.isChecked() else None)
+        self.system_theme_radio.toggled.connect(lambda: self.set_theme('system') if self.system_theme_radio.isChecked() else None)
+        
+        theme_layout.addWidget(self.light_theme_radio)
+        theme_layout.addWidget(self.dark_theme_radio)
+        theme_layout.addWidget(self.system_theme_radio)
+        
+        ui_settings_layout.addRow("Theme:", theme_widget)
+        
+        # Add all sections to settings layout
+        settings_sections.addWidget(reddit_api_section)
+        settings_sections.addWidget(download_settings_section)
+        settings_sections.addWidget(ui_settings_section)
+        
+        # Add settings sections to main settings layout
+        settings_layout.addLayout(settings_sections)
+        
+        # Add a spacer at the bottom
+        settings_layout.addStretch(1)
+        
+        # Add the main tabs to the main layout
+        main_layout.addWidget(main_tabs)
+        
+        # Update status based on current state
+        self._load_reddit_credentials()
+    
+    def toggle_mock_mode(self, checked):
+        """Toggle mock mode for Reddit API"""
+        if not hasattr(self, 'backend') or not self.backend:
+            return
+            
+        # Get credentials from UI
+        client_id = self.client_id_input.text().strip() if hasattr(self, 'client_id_input') else ''
+        client_secret = self.client_secret_input.text().strip() if hasattr(self, 'client_secret_input') else ''
+        
+        # Connect with or without mock mode
+        success = self.backend.connect_to_reddit(mock=checked, client_id=client_id, client_secret=client_secret)
+        
+        if success:
+            if hasattr(self, 'reddit_status_label') and self.reddit_status_label is not None:
+                if checked:
+                    self.reddit_status_label.setText("<font color='orange'>Connected (Mock Mode)</font>")
+                else:
+                    self.reddit_status_label.setText("<font color='green'>Connected</font>")
+            self.statusBar().showMessage(f"{'Mock mode' if checked else 'Normal mode'} enabled.", 3000)
+        else:
+            if hasattr(self, 'reddit_status_label') and self.reddit_status_label is not None:
+                self.reddit_status_label.setText("<font color='red'>Connection Failed</font>")
+            self.statusBar().showMessage("Failed to connect to Reddit API.", 3000)
+    
+    def set_theme(self, theme_name):
+        """Set the application theme"""
+        self.current_theme = theme_name
+        
+        # Determine if we should use dark mode based on theme selection
+        use_dark_mode = False
+        
+        if theme_name == 'dark':
+            use_dark_mode = True
+        elif theme_name == 'system':
+            # Try to detect system theme
+            # This is a simplified approach, in a real app we would use platform-specific methods
+            # For now, just default to light theme for 'system'
+            use_dark_mode = False
+        
+        # Apply the theme
+        app.setStyleSheet(app_theme.get_style_sheet(use_dark_mode))
+        
+        # Update theme radio buttons if needed
+        if hasattr(self, 'light_theme_radio') and self.light_theme_radio is not None:
+            self.light_theme_radio.setChecked(theme_name == 'light')
+        if hasattr(self, 'dark_theme_radio') and self.dark_theme_radio is not None:
+            self.dark_theme_radio.setChecked(theme_name == 'dark')
+        if hasattr(self, 'system_theme_radio') and self.system_theme_radio is not None:
+            self.system_theme_radio.setChecked(theme_name == 'system')
+        
+        # Emit theme changed signal
+        self.theme_changed_signal.emit(use_dark_mode)
+    
+    def start_search(self):
+        """Start a search with the current parameters"""
+        # Get search parameters from UI
+        keywords = self.keyword_input.text().strip()
+        if not keywords:
+            QMessageBox.warning(self, "Search Error", "Please enter search keywords.")
+            return
+            
+        # Check if a search is already running
+        if hasattr(self, 'search_worker') and self.search_worker is not None and self.search_worker.is_running:
+            QMessageBox.warning(self, "Search in Progress", "A search is already in progress. Please wait or cancel it.")
+            return
+            
+        # Show searching status
+        self.statusBar().showMessage("Searching Reddit...")
+        self.search_button.setEnabled(False)
+        self.search_button.setText("Searching...")
+        
+        # Clear previous results
+        self._clear_results()
+        
+        # Get search parameters
+        media_type = self.media_type_combo.currentText()
+        sort_by = self.sort_combo.currentText().lower()
+        time_filter = self.time_filter_combo.currentText().lower()
+        if time_filter == "all time":
+            time_filter = "all"
+        allow_nsfw = self.nsfw_filter_toggle.isChecked()
+        limit = self.limit_input.value()
+        
+        # Create search worker thread
+        self.search_worker = SearchWorker(
+            self.backend,
+            keywords=keywords,
+            media_type=media_type,
+            sort=sort_by,
+            time_filter=time_filter,
+            limit=limit,
+            allow_nsfw=allow_nsfw
+        )
+        
+        # Connect signals
+        self.search_worker.results_ready.connect(self._display_search_results)
+        self.search_worker.search_error.connect(self._handle_search_error)
+        self.search_worker.search_completed.connect(self._search_completed)
+        
+        # Start the search
+        self.search_worker.start()
+    
+    def _clear_results(self):
+        """Clear search results"""
+        # Clear result widgets list
+        self.result_widgets = []
+        
+        # Remove widgets from layout
+        if hasattr(self, 'results_grid_layout') and self.results_grid_layout is not None:
+            # Remove all items except the empty state label
+            while self.results_grid_layout.count() > 1:
+                item = self.results_grid_layout.takeAt(1)
+                if item.widget():
+                    item.widget().deleteLater()
+                    
+            # Show empty state label
+            if hasattr(self, 'results_empty_state_label') and self.results_empty_state_label is not None:
+                self.results_empty_state_label.setText("Searching...")
+                self.results_empty_state_label.setVisible(True)
+                
+        # Reset counters and buttons
+        if hasattr(self, 'results_count_label') and self.results_count_label is not None:
+            self.results_count_label.setText("0 results")
+            
+        if hasattr(self, 'select_all_button') and self.select_all_button is not None:
+            self.select_all_button.setEnabled(False)
+            
+        if hasattr(self, 'download_selected_button') and self.download_selected_button is not None:
+            self.download_selected_button.setEnabled(False)
+    
+    def _search_completed(self):
+        """Handle search completion"""
+        # Reset search button
+        if hasattr(self, 'search_button') and self.search_button is not None:
+            self.search_button.setEnabled(True)
+            self.search_button.setText("Search")
+            
+        # Update status bar
+        if hasattr(self, 'result_widgets'):
+            result_count = len(self.result_widgets)
+            self.statusBar().showMessage(f"Search completed with {result_count} results.", 3000)
+    
+    def _display_search_results(self, results):
+        """Display search results in the UI"""
+        # Clear any existing results first
+        self._clear_results()
+        
+        # Hide empty state label if we have results
+        if hasattr(self, 'results_empty_state_label') and self.results_empty_state_label is not None:
+            self.results_empty_state_label.setVisible(len(results) == 0)
+            
+        if not results:
+            # Show "No results found" message
+            if hasattr(self, 'results_empty_state_label') and self.results_empty_state_label is not None:
+                self.results_empty_state_label.setText("No results found")
+            return
+            
+        # Calculate number of columns based on result count and window width
+        num_columns = min(4, max(1, len(results)))
+        
+        # Add each result to the grid
+        for i, result in enumerate(results):
+            row = i // num_columns
+            col = i % num_columns
+            
+            # Create result widget
+            result_widget = ResultsViewWidget(
+                title=result.get('title', 'No Title'),
+                subreddit=result.get('subreddit', 'Unknown'),
+                upvotes=result.get('score', '0'),
+                media_type=result.get('media_type', 'Unknown'),
+                image_url=result.get('thumbnail', ''),
+                is_nsfw=result.get('nsfw', False)
+            )
+            
+            # Connect selection signal
+            result_widget.selection_changed.connect(self._update_selection_status)
+            
+            # Add to grid layout
+            if hasattr(self, 'results_grid_layout') and self.results_grid_layout is not None:
+                self.results_grid_layout.addWidget(result_widget, row, col)
+                
+            # Store in our list of result widgets
+            self.result_widgets.append({
+                'widget': result_widget,
+                'data': result
+            })
+            
+        # Update count label
+        if hasattr(self, 'results_count_label') and self.results_count_label is not None:
+            self.results_count_label.setText(f"{len(results)} results")
+            
+        # Enable select all button
+        if hasattr(self, 'select_all_button') and self.select_all_button is not None:
+            self.select_all_button.setEnabled(len(results) > 0)
+            
+        # Enable download button if we have results
+        if hasattr(self, 'download_selected_button') and self.download_selected_button is not None:
+            self.download_selected_button.setEnabled(len(results) > 0)
+    
+    def _handle_search_error(self, error_message):
+        """Handle search errors"""
+        # Reset search button
+        if hasattr(self, 'search_button') and self.search_button is not None:
+            self.search_button.setEnabled(True)
+            self.search_button.setText("Search")
+            
+        # Show error message
+        QMessageBox.critical(self, "Search Error", f"Error searching Reddit: {error_message}")
+        
+        # Update empty state
+        if hasattr(self, 'results_empty_state_label') and self.results_empty_state_label is not None:
+            self.results_empty_state_label.setText("Search failed")
+            self.results_empty_state_label.setVisible(True)
+            
+        # Update status bar
+        self.statusBar().showMessage("Search failed. Please try again.", 3000)
+    
+    def _update_selection_status(self):
+        """Update the selection status and download button"""
+        if not hasattr(self, 'result_widgets') or not self.result_widgets:
+            return
+            
+        # Count selected items
+        selected_count = sum(1 for item in self.result_widgets if item['widget'].is_selected())
+        
+        # Update download button text
+        if hasattr(self, 'download_selected_button') and self.download_selected_button is not None:
+            self.download_selected_button.setText(f"Download Selected ({selected_count})")
+            self.download_selected_button.setEnabled(selected_count > 0)
+    
+    def toggle_select_all(self):
+        """Toggle selection of all results"""
+        if not hasattr(self, 'result_widgets') or not self.result_widgets:
+            return
+            
+        # Determine if we should select or deselect all
+        # If any are not selected, we'll select all
+        any_unselected = any(not item['widget'].is_selected() for item in self.result_widgets)
+        
+        # Update all widgets
+        for item in self.result_widgets:
+            item['widget'].set_selected(any_unselected)
+            
+        # Update button text
+        if hasattr(self, 'select_all_button') and self.select_all_button is not None:
+            self.select_all_button.setText("Deselect All" if any_unselected else "Select All")
+            
+        # Update download button
+        self._update_selection_status()
+    
+    def download_selected(self):
+        """Download the selected results"""
+        if not hasattr(self, 'result_widgets') or not self.result_widgets:
+            return
+            
+        # Get selected items
+        selected_items = [item['data'] for item in self.result_widgets if item['widget'].is_selected()]
+        
+        if not selected_items:
+            QMessageBox.information(self, "No Selection", "Please select at least one item to download.")
+            return
+            
+        # Confirm download
+        confirm = QMessageBox.question(
+            self,
+            "Confirm Download",
+            f"Download {len(selected_items)} selected items?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+        
+        if confirm != QMessageBox.StandardButton.Yes:
+            return
+            
+        # Check if backend is available
+        if not hasattr(self, 'backend') or not self.backend:
+            QMessageBox.critical(self, "Error", "Backend not initialized.")
+            return
+            
+        # Add each item to download queue
+        download_ids = []
+        for item in selected_items:
+            download_id = self.backend.add_to_download_queue(item)
+            if download_id:
+                download_ids.append(download_id)
+                
+        # Start download worker if needed
+        if download_ids and (not hasattr(self, 'download_worker') or 
+                           self.download_worker is None or 
+                           not self.download_worker.is_running):
+            self.download_worker = DownloadWorker(self.backend, download_ids)
+            self.download_worker.progress_updated.connect(self._update_download_progress)
+            self.download_worker.download_completed.connect(self._handle_download_completed)
+            self.download_worker.start()
+            
+        # Show status message
+        self.statusBar().showMessage(f"Added {len(download_ids)} items to download queue.", 3000)
+        
+        # Refresh queue
+        self.refresh_queue_and_history()
+    
+    def _add_download_to_queue(self, item, position=0):
+        """Add a download item to the queue UI"""
+        if not hasattr(self, 'queue_items_layout') or self.queue_items_layout is None:
+            return
+            
+        # Hide empty label if it's visible
+        if hasattr(self, 'queue_empty_label') and self.queue_empty_label is not None:
+            self.queue_empty_label.setVisible(False)
+            
+        # Create item card widget
+        card = QFrame()
+        card.setObjectName("downloadCard")
+        card.setFrameShape(QFrame.Shape.StyledPanel)
+        card.setFrameShadow(QFrame.Shadow.Raised)
+        card_layout = QHBoxLayout(card)
+        
+        # Info section
+        info_widget = QWidget()
+        info_layout = QVBoxLayout(info_widget)
+        info_layout.setSpacing(5)
+        
+        # Title and subreddit
+        title_label = QLabel(item.get('title', 'No Title'))
+        title_label.setFont(QFont("Inter", 10, QFont.Weight.Bold))
+        title_label.setWordWrap(True)
+        
+        subreddit_label = QLabel(f"r/{item.get('subreddit', 'Unknown')}")
+        subreddit_label.setFont(QFont("Inter", 8))
+        
+        # Media type and size
+        media_info = f"{item.get('media_type', 'Unknown')}"
+        if 'size' in item and item['size']:
+            media_info += f" • {self._format_file_size(item['size'])}" 
+        media_label = QLabel(media_info)
+        media_label.setFont(QFont("Inter", 8))
+        
+        # Add to info layout
+        info_layout.addWidget(title_label)
+        info_layout.addWidget(subreddit_label)
+        info_layout.addWidget(media_label)
+        
+        card_layout.addWidget(info_widget, 4)  # 4/10 of space
+        
+        # Progress section
+        progress_widget = QWidget()
+        progress_layout = QVBoxLayout(progress_widget)
+        progress_layout.setSpacing(5)
+        
+        # Progress bar
+        progress_bar = QProgressBar()
+        progress_bar.setRange(0, 100)
+        progress_bar.setValue(0)
+        progress_bar.setTextVisible(True)
+        progress_layout.addWidget(progress_bar)
+        
+        # Status label
+        status_label = QLabel("Queued")
+        status_label.setAlignment(Qt.AlignCenter)
+        progress_layout.addWidget(status_label)
+        
+        card_layout.addWidget(progress_widget, 4)  # 4/10 of space
+        
+        # Action buttons
+        actions_widget = QWidget()
+        actions_layout = QVBoxLayout(actions_widget)
+        
+        # Cancel button
+        cancel_button = QPushButton("Cancel")
+        cancel_button.setObjectName("cancelButton")
+        cancel_button.clicked.connect(lambda: self._cancel_download(item.get('id', '')))
+        actions_layout.addWidget(cancel_button)
+        
+        card_layout.addWidget(actions_widget, 2)  # 2/10 of space
+        
+        # Add to queue layout at the specified position
+        self.queue_items_layout.insertWidget(position, card)
+        
+        # Store references for updating
+        self.download_items[item.get('id', '')] = {
+            'widget': card,
+            'progress_bar': progress_bar,
+            'status_label': status_label,
+            'data': item
+        }
+        
+        # Update queue visibility
+        self._update_queue_visibility()
+        
+    def _add_to_history(self, item):
+        """Add an item to the download history UI"""
+        if not hasattr(self, 'history_items_layout') or self.history_items_layout is None:
+            return
+            
+        # Hide empty label if it's visible
+        if hasattr(self, 'history_empty_label') and self.history_empty_label is not None:
+            self.history_empty_label.setVisible(False)
+            
+        # Create history card
+        card = QFrame()
+        card.setObjectName("historyCard")
+        card.setFrameShape(QFrame.Shape.StyledPanel)
+        card.setFrameShadow(QFrame.Shadow.Raised)
+        card_layout = QHBoxLayout(card)
+        
+        # Info section
+        info_widget = QWidget()
+        info_layout = QVBoxLayout(info_widget)
+        
+        # Title and subreddit
+        title_label = QLabel(item.get('title', 'No Title'))
+        title_label.setFont(QFont("Inter", 10, QFont.Weight.Bold))
+        title_label.setWordWrap(True)
+        
+        # Details
+        details = f"r/{item.get('subreddit', 'Unknown')} • {item.get('media_type', 'Unknown')}"
+        if 'downloaded_at' in item and item['downloaded_at']:
+            details += f" • {item['downloaded_at']}"
+        details_label = QLabel(details)
+        details_label.setFont(QFont("Inter", 8))
+        
+        info_layout.addWidget(title_label)
+        info_layout.addWidget(details_label)
+        
+        card_layout.addWidget(info_widget, 7)  # 7/10 of space
+        
+        # Action buttons
+        actions_widget = QWidget()
+        actions_layout = QVBoxLayout(actions_widget)
+        
+        # Open folder button
+        open_button = QPushButton("Open Folder")
+        open_button.clicked.connect(lambda: self._open_download_folder(item.get('local_path', '')))
+        actions_layout.addWidget(open_button)
+        
+        card_layout.addWidget(actions_widget, 3)  # 3/10 of space
+        
+        # Add to history layout
+        self.history_items_layout.insertWidget(0, card)  # Add at top
+        
+        # Update history visibility
+        self._update_history_visibility()
+    
+    def _remove_from_queue(self, widget):
+        """Remove a widget from the queue UI"""
+        if not hasattr(self, 'queue_items_layout') or self.queue_items_layout is None:
+            return
+            
+        # Find and remove the widget
+        for i in range(self.queue_items_layout.count()):
+            item = self.queue_items_layout.itemAt(i)
+            if item.widget() == widget:
+                # Remove from layout
+                self.queue_items_layout.removeItem(item)
+                if item.widget():
+                    item.widget().deleteLater()
+                break
+                
+        # Update queue visibility
+        self._update_queue_visibility()
+    
+    def _update_queue_visibility(self):
+        """Update the visibility of queue elements based on queue contents"""
+        if not hasattr(self, 'queue_items_layout') or self.queue_items_layout is None:
+            return
+            
+        # Check if queue is empty
+        is_empty = self.queue_items_layout.count() == 0 or \
+                  (self.queue_items_layout.count() == 1 and \
+                   hasattr(self, 'queue_empty_label') and \
+                   self.queue_items_layout.itemAt(0).widget() == self.queue_empty_label)
+                   
+        # Show/hide empty label
+        if hasattr(self, 'queue_empty_label') and self.queue_empty_label is not None:
+            self.queue_empty_label.setVisible(is_empty)
+    
+    def _update_history_visibility(self):
+        """Update the visibility of history elements based on history contents"""
+        if not hasattr(self, 'history_items_layout') or self.history_items_layout is None:
+            return
+            
+        # Check if history is empty
+        is_empty = self.history_items_layout.count() == 0 or \
+                  (self.history_items_layout.count() == 1 and \
+                   hasattr(self, 'history_empty_label') and \
+                   self.history_items_layout.itemAt(0).widget() == self.history_empty_label)
+                   
+        # Show/hide empty label
+        if hasattr(self, 'history_empty_label') and self.history_empty_label is not None:
+            self.history_empty_label.setVisible(is_empty)
+    
+    def _open_download_folder(self, path):
+        """Open the folder containing a downloaded file"""
+        if not path:
+            QMessageBox.warning(self, "Error", "Path not available.")
+            return
+            
+        # Get directory part of the path
+        dir_path = os.path.dirname(path) if os.path.isfile(path) else path
+        
+        # Open directory
+        if os.path.exists(dir_path):
+            QDesktopServices.openUrl(QUrl.fromLocalFile(dir_path))
+        else:
+            QMessageBox.warning(self, "Error", f"Directory not found: {dir_path}")
+    
+    def _format_file_size(self, size_bytes):
+        """Format file size in human-readable format"""
+        if size_bytes is None:
+            return "Unknown size"
+            
+        size_bytes = int(size_bytes)
+        
+        # Define units and thresholds
+        units = ['B', 'KB', 'MB', 'GB', 'TB']
+        size = float(size_bytes)
+        unit_index = 0
+        
+        # Find appropriate unit
+        while size >= 1024 and unit_index < len(units) - 1:
+            size /= 1024
+            unit_index += 1
+            
+        # Format with 2 decimal places if not bytes
+        if unit_index == 0:
+            return f"{int(size)} {units[unit_index]}"
+        else:
+            return f"{size:.2f} {units[unit_index]}"
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    
+    # Create icons directory if it doesn't exist
+    icons_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), app_theme.ICON_PATH)
+    if not os.path.exists(icons_dir):
+        os.makedirs(icons_dir)
+        print(f"Created icons directory: {icons_dir}")
+    else:
+        print(f"Icons directory exists: {icons_dir}")
+    
+    main_window = ModernMainWindow()
+    main_window.show()
+    sys.exit(app.exec())

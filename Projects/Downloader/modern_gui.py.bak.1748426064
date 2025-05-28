@@ -1,0 +1,789 @@
+"""Reddit Grabber - Modern UI
+A modern, responsive PySide6 GUI for Reddit Media Grabber with a purple and yellow theme.
+"""
+
+# Import standard modules
+import sys
+import os
+import time
+import pathlib
+import datetime
+from functools import partial
+
+# Import PySide6 modules
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+    QPushButton, QLineEdit, QComboBox, QCheckBox, QFrame, QScrollArea,
+    QGridLayout, QProgressBar, QFileDialog, QMessageBox, QSpinBox,
+    QGraphicsDropShadowEffect, QGroupBox, QFormLayout, QRadioButton, QTabWidget,
+    QToolButton, QSpacerItem, QSizePolicy, QDialog, QTableWidget, QTableWidgetItem,
+    QHeaderView, QStackedWidget, QListWidget, QListWidgetItem, QDateEdit, QSlider,
+    QToolBar, QStatusBar, QMenu
+)
+from PySide6.QtCore import QTimer, Qt, Signal, QSize, QThread, Slot, QUrl, QDate, QRect
+from PySide6.QtGui import QAction, QIcon, QFont, QPalette, QColor, QPixmap, QPainter, QBrush, QDesktopServices, QCursor, QMovie
+
+# Import custom modules
+from gui_backend import GUIBackend
+import theme as app_theme
+
+# Worker class for search functionality
+class SearchWorker(QThread):
+    """Thread worker for handling searches"""
+    results_ready = Signal(list)
+    search_error = Signal(str)
+    search_completed = Signal()
+    
+    def __init__(self, backend, keywords, media_type="All", sort="relevance", time_filter="all", limit=50, allow_nsfw=False):
+        super().__init__()
+        self.backend = backend
+        self.keywords = keywords
+        self.media_type = media_type
+        self.sort = sort
+        self.time_filter = time_filter
+        self.limit = limit
+        self.allow_nsfw = allow_nsfw
+        self.is_running = True
+    
+    def run(self):
+        """Main search function"""
+        try:
+            # Call backend search method
+            results = self.backend.search_reddit(
+                keywords=self.keywords,
+                media_type=self.media_type,
+                sort=self.sort,
+                time_filter=self.time_filter,
+                limit=self.limit,
+                allow_nsfw=self.allow_nsfw
+            )
+            
+            # Emit results if we're still running
+            if self.is_running:
+                self.results_ready.emit(results)
+        except Exception as e:
+            # Emit error if we're still running
+            if self.is_running:
+                self.search_error.emit(str(e))
+        finally:
+            # Emit completed signal if we're still running
+            if self.is_running:
+                self.search_completed.emit()
+    
+    def stop(self):
+        """Stop the search worker"""
+        self.is_running = False
+
+# Worker class for download functionality
+class DownloadWorker(QThread):
+    """Thread worker for handling downloads"""
+    progress_updated = Signal(str, int, str)
+    download_completed = Signal(str, bool, str)
+    
+    def __init__(self, backend, download_ids):
+        super().__init__()
+        self.backend = backend
+        self.download_ids = download_ids
+        self.is_running = True
+        
+    def run(self):
+        """Main download loop"""
+        # Process all download IDs in the queue
+        while self.is_running and self.download_ids:
+            # Get the first download ID from the queue
+            download_id = self.download_ids[0]
+            
+            # Check status every 0.5 seconds and update progress
+            success = False
+            while self.is_running:
+                # Get current status from backend
+                status_data = self.backend.get_queue_status()
+                
+                # Find our download
+                current_item = None
+                for item in status_data:
+                    if item.get('download_id') == download_id:
+                        current_item = item
+                        break
+                
+                if not current_item:
+                    # Download might be completed or removed from queue
+                    break
+                    
+                # Update progress
+                progress = current_item.get('progress', 0)
+                status = current_item.get('status', 'Queued')
+                self.progress_updated.emit(download_id, progress, status)
+                
+                # Check if download completed
+                if status in ['Completed', 'Failed', 'Cancelled']:
+                    success = status == 'Completed'
+                    message = current_item.get('message', 'Download completed' if success else 'Download failed')
+                    break
+                    
+                # Sleep before checking again
+                time.sleep(0.5)
+            
+            # Emit completion signal
+            if self.is_running:
+                message = 'Download completed successfully' if success else 'Download failed'
+                self.download_completed.emit(download_id, success, message)
+                
+                # Remove from our processing queue
+                if download_id in self.download_ids:
+                    self.download_ids.remove(download_id)
+            
+    def stop(self):
+        """Stop the download worker"""
+        self.is_running = False
+        
+    def run(self):
+        """Main download loop"""
+        # Process all download IDs in the queue
+        while self.is_running and self.download_ids:
+            # Get the first download ID from the queue
+            download_id = self.download_ids[0]
+            
+            # Check status every 0.5 seconds and update progress
+            success = False
+            while self.is_running:
+                # Get current status from backend
+                status_data = self.backend.get_queue_status()
+                
+                # Find our download
+                current_item = None
+                for item in status_data:
+                    if item.get('download_id') == download_id:
+                        current_item = item
+                        break
+                
+                if not current_item:
+                    # Download might be completed or removed from queue
+                    break
+                    
+                # Update progress
+                progress = current_item.get('progress', 0)
+                status = current_item.get('status', 'Queued')
+                self.progress_updated.emit(download_id, progress, status)
+                
+                # Check if download completed
+                if status in ['Completed', 'Failed', 'Cancelled']:
+                    success = status == 'Completed'
+                    message = current_item.get('message', 'Download completed' if success else 'Download failed')
+                    break
+                    
+                # Sleep before checking again
+                time.sleep(0.5)
+            
+            # Emit completion signal
+            if self.is_running:
+                message = 'Download completed successfully' if success else 'Download failed'
+                self.download_completed.emit(download_id, success, message)
+                
+                # Remove from our processing queue
+                if download_id in self.download_ids:
+                    self.download_ids.remove(download_id)
+            
+    def stop(self):
+        """Stop the download worker"""
+        self.is_running = False
+
+# Main window class for the application
+class ModernMainWindow(QMainWindow):
+    theme_changed_signal = Signal(bool)
+    
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Reddit Media Grabber")
+        self.setGeometry(100, 100, 1350, 950)
+        self.setMinimumSize(900, 600)
+        self.current_theme = 'light'
+        
+        # Initialize backend integration
+        self.backend = GUIBackend()
+        
+        # Initialize worker threads
+        self.download_worker = None
+        self.search_worker = None
+        
+        # Initialize UI element references to None to prevent AttributeError
+        self.client_id_input = None
+        self.client_secret_input = None
+        self.reddit_status_label = None
+        self.nsfw_filter_toggle = None
+        self.download_dir_input = None
+        self.theme_toggle_button = None
+        self.light_theme_radio = None
+        self.dark_theme_radio = None
+        
+        # Dictionary to track download items in the UI
+        self.download_items = {}
+        self.history_items = []
+        
+        # Set up UI
+        self.init_ui()
+        
+        # Apply theme
+        self.set_theme(self.current_theme)
+        
+        # Load settings
+        self._load_settings()
+        
+    def _load_settings(self):
+        """Load settings from backend"""
+        # Load Reddit credentials
+        self._load_reddit_credentials()
+        
+        # Load other settings if needed
+        # ...
+        
+    def _load_reddit_credentials(self):
+        """Load Reddit credentials from config and populate UI fields"""
+        if not hasattr(self, 'backend') or not self.backend:
+            return
+        
+        # Get config from backend
+        config = self.backend.config
+        if 'reddit' in config:
+            # Update UI fields if they exist
+            if hasattr(self, 'client_id_input') and self.client_id_input is not None:
+                self.client_id_input.setText(config['reddit'].get('client_id', ''))
+            if hasattr(self, 'client_secret_input') and self.client_secret_input is not None:
+                self.client_secret_input.setText(config['reddit'].get('client_secret', ''))
+            
+            # Update connection status
+            if hasattr(self, 'reddit_status_label') and self.reddit_status_label is not None:
+                if self.backend.reddit:
+                    if hasattr(self.backend.reddit, 'is_mocked') and self.backend.reddit.is_mocked:
+                        self.reddit_status_label.setText("<font color='orange'>Connected (Mock Mode)</font>")
+                    else:
+                        self.reddit_status_label.setText("<font color='green'>Connected</font>")
+                else:
+                    self.reddit_status_label.setText("<font color='red'>Disconnected</font>")
+    
+    def init_ui(self):
+        """Initialize the user interface"""
+        # Create central widget
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        main_layout = QVBoxLayout(central_widget)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        
+        # Create status bar
+        self.statusBar().showMessage("Ready")
+        
+        # Create main tab widget for different sections
+        self.main_tabs = QTabWidget()
+        
+        # Create tabs
+        self.download_tab = QWidget()
+        self.queue_history_tab = QWidget()
+        self.settings_tab = QWidget()
+        
+        # Add tabs to tab widget
+        self.main_tabs.addTab(self.download_tab, "Download")
+        self.main_tabs.addTab(self.queue_history_tab, "Queue & History")
+        self.main_tabs.addTab(self.settings_tab, "Settings")
+        
+        # Setup tab layouts
+        self.setup_download_tab()
+        self.setup_queue_history_tab()
+        self.setup_settings_tab()
+        
+        # Add the main tabs to the main layout
+        main_layout.addWidget(self.main_tabs)
+        
+    def setup_download_tab(self):
+        """Set up the Download tab with Reddit authentication, single post download, and global search"""
+        layout = QVBoxLayout(self.download_tab)
+        layout.setSpacing(15)
+        
+        # Reddit Authentication Group
+        auth_group = QGroupBox("Reddit Authentication")
+        auth_layout = QVBoxLayout(auth_group)
+        
+        auth_status = QHBoxLayout()
+        status_label = QLabel("Status:")
+        self.reddit_status_label = QLabel("Not Connected")
+        auth_status.addWidget(status_label)
+        auth_status.addWidget(self.reddit_status_label)
+        auth_status.addStretch(1)
+        
+        auth_button = QPushButton("Connect to Reddit API")
+        auth_button.setObjectName("primaryButton")
+        auth_button.clicked.connect(self.handle_reddit_connect)
+        
+        auth_layout.addLayout(auth_status)
+        auth_layout.addWidget(auth_button)
+        
+        # Single Post Download Card
+        single_post_group = QGroupBox("Single Post Download")
+        single_post_layout = QVBoxLayout(single_post_group)
+        
+        url_layout = QHBoxLayout()
+        url_label = QLabel("Reddit URL:")
+        self.url_input = QLineEdit()
+        self.url_input.setPlaceholderText("Enter Reddit post URL (e.g., https://www.reddit.com/r/...)")
+        url_layout.addWidget(url_label)
+        url_layout.addWidget(self.url_input, 1)
+        
+        single_download_button = QPushButton("Download")
+        single_download_button.setObjectName("downloadButton")
+        single_download_button.clicked.connect(self.handle_single_download)
+        
+        single_progress = QProgressBar()
+        single_progress.setRange(0, 100)
+        single_progress.setValue(0)
+        
+        single_status = QLabel("Ready to download")
+        
+        single_post_layout.addLayout(url_layout)
+        single_post_layout.addWidget(single_download_button, 0, Qt.AlignRight)
+        single_post_layout.addWidget(single_progress)
+        single_post_layout.addWidget(single_status)
+        
+        # Global Search Download Card
+        global_search_group = QGroupBox("Global Search Download")
+        global_search_layout = QVBoxLayout(global_search_group)
+        
+        # Search parameters form
+        search_form = QFormLayout()
+        search_form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
+        search_form.setHorizontalSpacing(10)
+        search_form.setVerticalSpacing(10)
+        
+        # Keywords
+        self.keywords_input = QLineEdit()
+        self.keywords_input.setPlaceholderText("Enter search keywords...")
+        search_form.addRow("Keywords:", self.keywords_input)
+        
+        # Media type
+        self.media_type_combo = QComboBox()
+        self.media_type_combo.addItems(["All", "Images", "Videos", "GIFs", "Articles"])
+        search_form.addRow("Media Type:", self.media_type_combo)
+        
+        # Sort options
+        self.sort_combo = QComboBox()
+        self.sort_combo.addItems(["Relevance", "Hot", "New", "Top", "Comments"])
+        search_form.addRow("Sort By:", self.sort_combo)
+        
+        # Time period
+        self.time_period_combo = QComboBox()
+        self.time_period_combo.addItems(["All Time", "Day", "Week", "Month", "Year"])
+        search_form.addRow("Time Period:", self.time_period_combo)
+        
+        # NSFW filter
+        self.nsfw_filter_toggle = QCheckBox("Allow NSFW Content")
+        search_form.addRow("", self.nsfw_filter_toggle)
+        
+        # Result limit
+        self.limit_input = QSpinBox()
+        self.limit_input.setRange(10, 500)
+        self.limit_input.setValue(50)
+        self.limit_input.setSingleStep(10)
+        search_form.addRow("Result Limit:", self.limit_input)
+        
+        # Output directory
+        output_layout = QHBoxLayout()
+        self.output_dir_input = QLineEdit()
+        self.output_dir_input.setPlaceholderText("Default output directory")
+        browse_button = QPushButton("Browse...")
+        browse_button.clicked.connect(lambda: self.browse_directory(self.output_dir_input))
+        output_layout.addWidget(self.output_dir_input, 1)
+        output_layout.addWidget(browse_button)
+        search_form.addRow("Output:", output_layout)
+        
+        # Search button
+        self.search_button = QPushButton("Search & Download")
+        self.search_button.setObjectName("searchButton")
+        self.search_button.clicked.connect(self.handle_global_search)
+        
+        # Progress indicators
+        self.global_progress = QProgressBar()
+        self.global_progress.setRange(0, 100)
+        self.global_progress.setValue(0)
+        
+        self.global_status = QLabel("Ready to search")
+        
+        # Add form to layout
+        global_search_layout.addLayout(search_form)
+        global_search_layout.addWidget(self.search_button, 0, Qt.AlignRight)
+        global_search_layout.addWidget(self.global_progress)
+        global_search_layout.addWidget(self.global_status)
+        
+        # Add all components to main layout
+        layout.addWidget(auth_group)
+        layout.addWidget(single_post_group)
+        layout.addWidget(global_search_group)
+        layout.addStretch(1)
+    
+    def setup_queue_history_tab(self):
+        """Set up the Queue and History tab"""
+        layout = QVBoxLayout(self.queue_history_tab)
+        
+        # Create subtabs for Queue and History
+        subtabs = QTabWidget()
+        
+        # Queue tab
+        queue_tab = QWidget()
+        queue_layout = QVBoxLayout(queue_tab)
+        
+        # Queue filter controls
+        queue_filter_layout = QHBoxLayout()
+        queue_filter_label = QLabel("Filter:")
+        queue_filter_combo = QComboBox()
+        queue_filter_combo.addItems(["All", "Images", "Videos", "GIFs", "Articles"])
+        queue_filter_layout.addWidget(queue_filter_label)
+        queue_filter_layout.addWidget(queue_filter_combo)
+        queue_filter_layout.addStretch(1)
+        
+        # Queue table
+        self.queue_table = QTableWidget(0, 5)
+        self.queue_table.setHorizontalHeaderLabels(["Title", "Type", "Progress", "Status", "Actions"])
+        self.queue_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.queue_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.queue_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.queue_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self.queue_table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        
+        # Add to layout
+        queue_layout.addLayout(queue_filter_layout)
+        queue_layout.addWidget(self.queue_table)
+        
+        # History tab
+        history_tab = QWidget()
+        history_layout = QVBoxLayout(history_tab)
+        
+        # History filter controls
+        history_filter_layout = QHBoxLayout()
+        
+        media_filter_label = QLabel("Media Type:")
+        media_filter_combo = QComboBox()
+        media_filter_combo.addItems(["All", "Images", "Videos", "GIFs", "Articles"])
+        
+        date_range_label = QLabel("Date Range:")
+        date_from = QDateEdit(QDate.currentDate().addDays(-7))
+        date_to = QDateEdit(QDate.currentDate())
+        date_from.setCalendarPopup(True)
+        date_to.setCalendarPopup(True)
+        
+        history_filter_layout.addWidget(media_filter_label)
+        history_filter_layout.addWidget(media_filter_combo)
+        history_filter_layout.addSpacing(20)
+        history_filter_layout.addWidget(date_range_label)
+        history_filter_layout.addWidget(date_from)
+        history_filter_layout.addWidget(QLabel("to"))
+        history_filter_layout.addWidget(date_to)
+        history_filter_layout.addStretch(1)
+        
+        # History table
+        self.history_table = QTableWidget(0, 5)
+        self.history_table.setHorizontalHeaderLabels(["Title", "Type", "Date", "Status", "Actions"])
+        self.history_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        self.history_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.history_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.history_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self.history_table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        
+        # Clear history button
+        clear_history_button = QPushButton("Clear History")
+        clear_history_button.clicked.connect(self.clear_history)
+        
+        # Add to layout
+        history_layout.addLayout(history_filter_layout)
+        history_layout.addWidget(self.history_table)
+        history_layout.addWidget(clear_history_button, 0, Qt.AlignRight)
+        
+        # Add tabs to subtabs
+        subtabs.addTab(queue_tab, "Queue")
+        subtabs.addTab(history_tab, "History")
+        
+        # Add subtabs to main layout
+        layout.addWidget(subtabs)
+    
+    def setup_settings_tab(self):
+        """Set up the Settings tab"""
+        layout = QVBoxLayout(self.settings_tab)
+        
+        # Reddit API settings section
+        reddit_settings_group = QGroupBox("Reddit API Settings")
+        reddit_settings_layout = QFormLayout(reddit_settings_group)
+        
+        # Client ID input
+        self.client_id_input = QLineEdit()
+        self.client_id_input.setPlaceholderText("Enter your Reddit API Client ID")
+        reddit_settings_layout.addRow("Client ID:", self.client_id_input)
+        
+        # Client Secret input
+        self.client_secret_input = QLineEdit()
+        self.client_secret_input.setPlaceholderText("Enter your Reddit API Client Secret")
+        self.client_secret_input.setEchoMode(QLineEdit.EchoMode.Password)
+        reddit_settings_layout.addRow("Client Secret:", self.client_secret_input)
+        
+        # Redirect URI input
+        self.redirect_uri_input = QLineEdit()
+        self.redirect_uri_input.setPlaceholderText("Enter your Redirect URI (optional)")
+        reddit_settings_layout.addRow("Redirect URI:", self.redirect_uri_input)
+        
+        # Test & Save button
+        reddit_save_button = QPushButton("Test & Save")
+        reddit_save_button.setObjectName("primaryButton")
+        reddit_save_button.clicked.connect(self.save_reddit_credentials)
+        reddit_settings_layout.addRow("", reddit_save_button)
+        
+        # Download settings section
+        download_settings_group = QGroupBox("Download Settings")
+        download_settings_layout = QFormLayout(download_settings_group)
+        
+        # Default download directory
+        dir_layout = QHBoxLayout()
+        self.download_dir_input = QLineEdit()
+        self.download_dir_input.setPlaceholderText("Select default download directory")
+        browse_button = QPushButton("Browse...")
+        browse_button.clicked.connect(lambda: self.browse_directory(self.download_dir_input, True))
+        dir_layout.addWidget(self.download_dir_input)
+        dir_layout.addWidget(browse_button)
+        download_settings_layout.addRow("Default Directory:", dir_layout)
+        
+        # Rate limit slider
+        rate_limit_layout = QHBoxLayout()
+        self.rate_limit_slider = QSlider(Qt.Horizontal)
+        self.rate_limit_slider.setRange(1, 10)
+        self.rate_limit_slider.setValue(5)
+        self.rate_limit_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
+        self.rate_limit_slider.setTickInterval(1)
+        self.rate_limit_value = QLabel("5")
+        self.rate_limit_slider.valueChanged.connect(lambda v: self.rate_limit_value.setText(str(v)))
+        rate_limit_layout.addWidget(self.rate_limit_slider)
+        rate_limit_layout.addWidget(self.rate_limit_value)
+        download_settings_layout.addRow("Rate Limit:", rate_limit_layout)
+        
+        # Save button
+        download_save_button = QPushButton("Save Settings")
+        download_save_button.clicked.connect(self.save_download_settings)
+        download_settings_layout.addRow("", download_save_button)
+        
+        # Theme settings section
+        theme_settings_group = QGroupBox("Theme Settings")
+        theme_settings_layout = QVBoxLayout(theme_settings_group)
+        
+        # Theme options
+        theme_radio_layout = QHBoxLayout()
+        self.light_theme_radio = QRadioButton("Light")
+        self.dark_theme_radio = QRadioButton("Dark")
+        self.light_theme_radio.setChecked(True)  # Default to light theme
+        
+        # Connect signals
+        self.light_theme_radio.toggled.connect(lambda checked: self.set_theme('light') if checked else None)
+        self.dark_theme_radio.toggled.connect(lambda checked: self.set_theme('dark') if checked else None)
+        
+        theme_radio_layout.addWidget(self.light_theme_radio)
+        theme_radio_layout.addWidget(self.dark_theme_radio)
+        theme_radio_layout.addStretch(1)
+        
+        # Preview section
+        theme_preview = QLabel("Theme Preview")
+        theme_preview.setAlignment(Qt.AlignCenter)
+        theme_preview.setFont(QFont(app_theme.FONT_FAMILY, app_theme.FONT_SIZE_LARGE))
+        
+        # Add to layout
+        theme_settings_layout.addLayout(theme_radio_layout)
+        theme_settings_layout.addWidget(theme_preview)
+        
+        # Add all sections to main layout
+        layout.addWidget(reddit_settings_group)
+        layout.addWidget(download_settings_group)
+        layout.addWidget(theme_settings_group)
+        layout.addStretch(1)
+    
+    def set_theme(self, theme_name):
+        """Set the application theme"""
+        self.current_theme = theme_name
+        
+        # Determine if we should use dark mode
+        use_dark_mode = theme_name == 'dark'
+        
+        # Apply the theme
+        app.setStyleSheet(app_theme.get_style_sheet(use_dark_mode))
+        
+        # Update radio buttons if needed
+        if hasattr(self, 'light_theme_radio') and self.light_theme_radio is not None:
+            self.light_theme_radio.setChecked(not use_dark_mode)
+        if hasattr(self, 'dark_theme_radio') and self.dark_theme_radio is not None:
+            self.dark_theme_radio.setChecked(use_dark_mode)
+        
+        # Emit theme changed signal
+        self.theme_changed_signal.emit(use_dark_mode)
+    
+    def browse_directory(self, line_edit_widget, is_default_setting=False):
+        """Open a file dialog to select a directory"""
+        current_dir = line_edit_widget.text() or os.path.expanduser("~")
+        new_dir = QFileDialog.getExistingDirectory(self, "Select Directory", current_dir)
+        
+        if new_dir:  # User selected a directory
+            line_edit_widget.setText(new_dir)
+            
+            # If this is the default download directory, save to settings
+            if is_default_setting and hasattr(self, 'backend') and self.backend:
+                settings = {"download_dir": new_dir}
+                self.backend.save_settings(settings)
+                self.statusBar().showMessage(f"Download directory set to: {new_dir}", 3000)
+    
+    def handle_reddit_connect(self):
+        """Connect to Reddit API with credentials"""
+        # Get credentials from UI
+        client_id = self.client_id_input.text().strip()
+        client_secret = self.client_secret_input.text().strip()
+        redirect_uri = self.redirect_uri_input.text().strip()
+        
+        if not client_id or not client_secret:
+            QMessageBox.warning(self, "Input Error", "Please enter both Client ID and Client Secret.")
+            return
+        
+        # Try to connect
+        self.statusBar().showMessage("Connecting to Reddit API...")
+        
+        # Connect (mock implementation for now)
+        if self.backend:
+            success = self.backend.connect_to_reddit(client_id=client_id, client_secret=client_secret)
+            
+            if success:
+                self.reddit_status_label.setText("<font color='green'>Connected</font>")
+                self.statusBar().showMessage("Successfully connected to Reddit API.", 3000)
+                # Save credentials
+                self.save_reddit_credentials()
+            else:
+                self.reddit_status_label.setText("<font color='red'>Connection Failed</font>")
+                self.statusBar().showMessage("Failed to connect to Reddit API.", 3000)
+                QMessageBox.critical(self, "Connection Error", "Failed to connect to Reddit API. Please check your credentials.")
+    
+    def save_reddit_credentials(self):
+        """Save Reddit API credentials"""
+        if self.backend:
+            credentials = {
+                "client_id": self.client_id_input.text().strip(),
+                "client_secret": self.client_secret_input.text().strip(),
+                "redirect_uri": self.redirect_uri_input.text().strip()
+            }
+            
+            self.backend.save_reddit_credentials(credentials)
+            self.statusBar().showMessage("Reddit API credentials saved.", 3000)
+    
+    def save_download_settings(self):
+        """Save download settings"""
+        if self.backend:
+            settings = {
+                "download_dir": self.download_dir_input.text().strip(),
+                "rate_limit": self.rate_limit_slider.value()
+            }
+            
+            self.backend.save_settings(settings)
+            self.statusBar().showMessage("Download settings saved.", 3000)
+    
+    def handle_single_download(self):
+        """Handle download of a single Reddit post"""
+        url = self.url_input.text().strip()
+        
+        if not url:
+            QMessageBox.warning(self, "Input Error", "Please enter a Reddit post URL.")
+            return
+        
+        # TODO: Implement actual download logic
+        QMessageBox.information(self, "Not Implemented", "Single post download functionality not yet implemented.")
+    
+    def handle_global_search(self):
+        """Handle global search and download"""
+        keywords = self.keywords_input.text().strip()
+        
+        if not keywords:
+            QMessageBox.warning(self, "Input Error", "Please enter search keywords.")
+            return
+        
+        # Get search parameters
+        media_type = self.media_type_combo.currentText()
+        sort_by = self.sort_combo.currentText().lower()
+        time_filter = self.time_period_combo.currentText().lower().replace(" ", "_")
+        allow_nsfw = self.nsfw_filter_toggle.isChecked()
+        limit = self.limit_input.value()
+        output_dir = self.output_dir_input.text().strip() or self.download_dir_input.text().strip()
+        
+        # TODO: Implement actual search and download logic
+        QMessageBox.information(self, "Not Implemented", "Global search download functionality not yet implemented.")
+    
+    def clear_history(self):
+        """Clear download history"""
+        # Ask for confirmation
+        reply = QMessageBox.question(self, "Confirm Clear", "Are you sure you want to clear all download history?",
+                                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            # Clear history table
+            self.history_table.setRowCount(0)
+            
+            # Clear history in backend
+            if self.backend:
+                self.backend.clear_history()
+            
+            self.statusBar().showMessage("Download history cleared.", 3000)
+    
+    def _format_file_size(self, size_bytes):
+        """Format file size in human-readable format"""
+        if size_bytes is None:
+            return "Unknown size"
+                    
+        size_bytes = int(size_bytes)
+                
+        # Define units and thresholds
+        units = ['B', 'KB', 'MB', 'GB', 'TB']
+        size = float(size_bytes)
+        unit_index = 0
+                
+        # Find appropriate unit
+        while size >= 1024 and unit_index < len(units) - 1:
+            size /= 1024
+            unit_index += 1
+            
+        # Format with 2 decimal places if not bytes
+        if unit_index == 0:
+            return f"{int(size)} {units[unit_index]}"
+        else:
+            return f"{size:.2f} {units[unit_index]}"
+        
+    def _format_file_size(self, size_bytes):
+        """Format file size in human-readable format"""
+        if size_bytes is None:
+            return "Unknown size"
+                    
+        size_bytes = int(size_bytes)
+                
+        # Define units and thresholds
+        units = ['B', 'KB', 'MB', 'GB', 'TB']
+        size = float(size_bytes)
+        unit_index = 0
+                
+        # Find appropriate unit
+        while size >= 1024 and unit_index < len(units) - 1:
+            size /= 1024
+            unit_index += 1
+            
+        # Format with 2 decimal places if not bytes
+        if unit_index == 0:
+            return f"{int(size)} {units[unit_index]}"
+        else:
+            return f"{size:.2f} {units[unit_index]}"
+
+# Application entry point
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    
+    # Create icons directory if it doesn't exist
+    icons_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'icons')
+    if not os.path.exists(icons_dir):
+        os.makedirs(icons_dir)
+        print(f"Created icons directory: {icons_dir}")
+    else:
+        print(f"Icons directory exists: {icons_dir}")
+    
+    main_window = ModernMainWindow()
+    main_window.show()
+    sys.exit(app.exec())

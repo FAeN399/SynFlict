@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSFW Reddit Grabber - UI Mockup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #9C27B0; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #7b1fa2; }
+        .dark ::-webkit-scrollbar-track { background: #2d3748; }
+        .dark ::-webkit-scrollbar-thumb { background: #FFC107; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #e0a800; }
+
+        /* Color Palette */
+        .bg-primary-purple { background-color: #9C27B0; }
+        .text-primary-purple { color: #9C27B0; }
+        .border-primary-purple { border-color: #9C27B0; }
+        .hover\:bg-primary-purple-dark:hover { background-color: #7b1fa2; }
+        .focus\:ring-primary-purple:focus { --tw-ring-color: #9C27B0; }
+
+
+        .bg-secondary-yellow { background-color: #FFC107; }
+        .text-secondary-yellow { color: #FFC107; }
+        .border-secondary-yellow { border-color: #FFC107; }
+        .hover\:bg-secondary-yellow-dark:hover { background-color: #e0a800; }
+        .focus\:ring-secondary-yellow:focus { --tw-ring-color: #FFC107; }
+
+
+        /* Themes */
+        .light .bg-background { background-color: #F8F9FA; }
+        .light .bg-surface { background-color: #FFFFFF; }
+        .light .text-text-primary { color: #212529; }
+        .light .text-text-secondary { color: #6C757D; }
+        .light .border-divider { border-color: #DEE2E6; }
+
+        .dark .bg-background { background-color: #121212; }
+        .dark .bg-surface { background-color: #1E1E1E; }
+        .dark .text-text-primary { color: #E0E0E0; }
+        .dark .text-text-secondary { color: #A0A0A0; }
+        .dark .border-divider { border-color: #333333; }
+
+        /* Tabs */
+        .tab-active {
+            border-bottom-color: #9C27B0 !important; color: #9C27B0 !important; font-weight: 600;
+        }
+        .dark .tab-active {
+            border-bottom-color: #FFC107 !important; color: #FFC107 !important;
+        }
+
+        /* Inputs & Buttons */
+        .input-styled {
+            @apply w-full px-4 py-2.5 rounded-lg border bg-surface border-divider text-text-primary placeholder-text-secondary focus:ring-2 focus:ring-primary-purple focus:border-primary-purple dark:focus:ring-secondary-yellow dark:focus:border-secondary-yellow outline-none transition-colors duration-200;
+        }
+        .btn-primary {
+            @apply bg-primary-purple text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-primary-purple-dark transition-colors duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed;
+        }
+        .btn-secondary {
+            @apply bg-secondary-yellow text-black px-6 py-2.5 rounded-lg font-semibold hover:bg-secondary-yellow-dark transition-colors duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed;
+        }
+        .btn-outline {
+            @apply border border-primary-purple text-primary-purple px-6 py-2.5 rounded-lg font-semibold hover:bg-primary-purple hover:text-white dark:border-secondary-yellow dark:text-secondary-yellow dark:hover:bg-secondary-yellow dark:hover:text-black transition-colors duration-200 flex items-center justify-center space-x-2;
+        }
+        .card {
+            @apply bg-surface p-4 sm:p-6 rounded-xl shadow-lg border border-divider;
+        }
+        .toggle-switch {
+            @apply relative inline-flex items-center cursor-pointer;
+        }
+        .toggle-switch input {
+            @apply sr-only;
+        }
+        .toggle-switch .slider {
+            @apply w-11 h-6 bg-gray-300 dark:bg-gray-600 rounded-full peer-checked:bg-primary-purple dark:peer-checked:bg-secondary-yellow transition-colors duration-200;
+        }
+        .toggle-switch .slider.slider-nsfw-active { /* Prominent active state for NSFW toggle */
+             @apply peer-checked:bg-secondary-yellow dark:peer-checked:bg-orange-500;
+        }
+        .toggle-switch .slider:before {
+            @apply absolute left-1 top-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 peer-checked:translate-x-full;
+        }
+        
+        /* NSFW Specific Styles */
+        .nsfw-badge {
+            @apply absolute top-2 right-2 bg-red-600 text-white text-xs font-semibold px-2 py-0.5 rounded z-10;
+        }
+        .dark .nsfw-badge {
+            @apply bg-red-500;
+        }
+        .nsfw-thumbnail-container {
+            @apply relative w-full h-32 overflow-hidden rounded-md bg-gray-200 dark:bg-gray-700; /* Added bg for when image is loading/missing */
+        }
+        .nsfw-thumbnail-blurred {
+            filter: blur(8px);
+            @apply w-full h-full object-cover transition-all duration-300;
+        }
+        .nsfw-thumbnail-container.revealed .nsfw-thumbnail-blurred {
+            filter: blur(0px);
+        }
+        .nsfw-reveal-overlay {
+            @apply absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center text-white opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300 cursor-pointer z-20;
+        }
+        .nsfw-thumbnail-container.revealed .nsfw-reveal-overlay {
+            @apply hidden;
+        }
+        .nsfw-marker {
+            @apply inline-block ml-1.5 text-red-500 dark:text-red-400 text-xs px-1 py-0.5 rounded bg-red-100 dark:bg-red-900;
+        }
+        .result-card.selected-card { /* Example for selected card state */
+            @apply ring-2 ring-offset-2 ring-primary-purple dark:ring-secondary-yellow;
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            @apply fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300; /* Increased opacity */
+        }
+        .modal-content {
+            @apply bg-surface p-6 rounded-lg shadow-xl w-full max-w-md m-4;
+        }
+
+        /* Toast/Warning Message */
+        .toast-message {
+            @apply fixed bottom-5 right-5 p-4 rounded-lg shadow-xl max-w-sm z-[60] transition-all duration-300; /* Ensure toast is above modal overlay */
+        }
+        .toast-success {
+            @apply bg-green-500 text-white;
+        }
+        .toast-error {
+            @apply bg-red-600 text-white;
+        }
+        .toast-warning {
+            @apply bg-yellow-500 text-black;
+        }
+
+    </style>
+</head>
+<body class="bg-background text-text-primary min-h-screen flex flex-col">
+
+    <header class="bg-surface shadow-md sticky top-0 z-40 border-b border-divider">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-fire text-red-500 text-3xl mr-3"></i> <h1 class="text-2xl font-bold text-text-primary">NSFW Reddit Grabber</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="theme-toggle" class="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700" aria-label="Toggle theme">
+                        <i class="fas fa-sun text-xl text-secondary-yellow hidden dark:inline"></i>
+                        <i class="fas fa-moon text-xl text-primary-purple inline dark:hidden"></i>
+                    </button>
+                </div>
+            </div>
+            <nav class="flex border-b border-divider -mb-px">
+                <button data-tab="download" class="tab-item py-4 px-6 border-b-2 border-transparent text-text-secondary hover:text-primary-purple dark:hover:text-secondary-yellow hover:border-primary-purple dark:hover:border-secondary-yellow focus:outline-none tab-active">
+                    <i class="fas fa-download mr-2"></i>Download
+                </button>
+                <button data-tab="queue" class="tab-item py-4 px-6 border-b-2 border-transparent text-text-secondary hover:text-primary-purple dark:hover:text-secondary-yellow hover:border-primary-purple dark:hover:border-secondary-yellow focus:outline-none">
+                    <i class="fas fa-stream mr-2"></i>Queue & History
+                </button>
+                <button data-tab="settings" class="tab-item py-4 px-6 border-b-2 border-transparent text-text-secondary hover:text-primary-purple dark:hover:text-secondary-yellow hover:border-primary-purple dark:hover:border-secondary-yellow focus:outline-none">
+                    <i class="fas fa-cog mr-2"></i>Settings
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
+        <div id="download-tab" class="tab-content space-y-8">
+            <section class="card">
+                <h2 class="text-xl font-semibold text-text-primary mb-4">Download from Post URL</h2>
+                <div class="space-y-4">
+                    <input type="text" placeholder="Enter Reddit Post URL (e.g., https://www.reddit.com/r/...)" class="input-styled">
+                    <button class="btn-primary w-full sm:w-auto">
+                        <i class="fas fa-cloud-arrow-down mr-2"></i>Fetch Media
+                    </button>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2 class="text-xl font-semibold text-text-primary mb-4">Download from Subreddit</h2>
+                <div class="space-y-4">
+                    <input type="text" placeholder="Enter NSFW Subreddit (e.g., r/nsfw_gifs)" class="input-styled">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <select class="input-styled">
+                            <option>Sort By: Hot</option>
+                            <option>Sort By: New</option>
+                            <option>Sort By: Top</option>
+                            <option>Sort By: Rising</option>
+                            <option>Sort By: Controversial</option>
+                        </select>
+                        <select class="input-styled" id="time-period-select" disabled> <option>Time Period: All</option>
+                            <option>Time Period: Hour</option>
+                            <option>Time Period: Day</option>
+                            <option>Time Period: Week</option>
+                            <option>Time Period: Month</option>
+                            <option>Time Period: Year</option>
+                        </select>
+                        <input type="number" placeholder="Result Limit (e.g., 25)" class="input-styled">
+                    </div>
+                    <button class="btn-primary w-full sm:w-auto">
+                        <i class="fas fa-search mr-2"></i>Scan Subreddit
+                    </button>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2 class="text-xl font-semibold text-text-primary mb-4">Global Reddit Search (NSFW Focus)</h2>
+                <div class="space-y-4">
+                    <input type="text" placeholder="Search NSFW Reddit for media..." class="input-styled">
+                    <button class="btn-primary w-full sm:w-auto">
+                        <i class="fas fa-globe-americas mr-2"></i>Search Media
+                    </button>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2 class="text-xl font-semibold text-text-primary mb-4">Filtering Options</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+                    <div>
+                        <h3 class="text-lg font-medium text-text-primary mb-2">Media Types</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center space-x-2 text-text-secondary"><input type="checkbox" class="form-checkbox rounded text-primary-purple dark:text-secondary-yellow focus:ring-primary-purple dark:focus:ring-secondary-yellow" checked><span>Images</span></label>
+                            <label class="flex items-center space-x-2 text-text-secondary"><input type="checkbox" class="form-checkbox rounded text-primary-purple dark:text-secondary-yellow" checked><span>Videos</span></label>
+                            <label class="flex items-center space-x-2 text-text-secondary"><input type="checkbox" class="form-checkbox rounded text-primary-purple dark:text-secondary-yellow" checked><span>GIFs</span></label>
+                            <label class="flex items-center space-x-2 text-text-secondary"><input type="checkbox" class="form-checkbox rounded text-primary-purple dark:text-secondary-yellow"><span>Articles/Links</span></label>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium text-text-primary mb-2">NSFW Content</h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="nsfw-filter-toggle" checked> <span class="slider slider-nsfw-active"></span> 
+                            <span class="ml-3 text-text-secondary">Show NSFW</span>
+                        </label>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium text-text-primary mb-2">Min. Upvotes</h3>
+                        <input type="number" placeholder="e.g., 100" class="input-styled">
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
+                    <h2 class="text-xl font-semibold text-text-primary">Results Preview</h2>
+                    <div class="space-x-2 flex-shrink-0">
+                        <button class="btn-outline text-sm px-3 py-1.5">Select All</button>
+                        <button class="btn-primary text-sm px-3 py-1.5"><i class="fas fa-download mr-1"></i>Download Selected (3)</button>
+                    </div>
+                </div>
+                <div id="results-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div class="result-card bg-background border border-divider rounded-lg p-3 space-y-2 shadow hover:shadow-xl hover:scale-[1.02] transition-all duration-200 focus-within:ring-2 focus-within:ring-primary-purple dark:focus-within:ring-secondary-yellow" data-nsfw="true" tabindex="0">
+                        <div class="nsfw-thumbnail-container">
+                            <img src="https://placehold.co/300x200/FF0000/FFFFFF?text=NSFW+Content+1" alt="NSFW Media Thumbnail - Blurred" class="nsfw-thumbnail-blurred">
+                            <div class="nsfw-reveal-overlay" role="button" tabindex="0" aria-label="Click to reveal NSFW thumbnail">
+                                <i class="fas fa-eye-slash text-2xl mb-1"></i>
+                                <span class="text-sm">Click to reveal</span>
+                            </div>
+                            <span class="nsfw-badge">NSFW</span>
+                        </div>
+                        <h4 class="font-semibold text-text-primary truncate">Spicy Meme Collection (NSFW)</h4>
+                        <p class="text-xs text-text-secondary">r/nsfw_memes <i class="fas fa-image mx-1"></i> 2.5k upvotes</p>
+                        <label class="flex items-center space-x-2 text-xs text-text-secondary"><input type="checkbox" class="form-checkbox rounded text-primary-purple dark:text-secondary-yellow" checked><span>Select</span></label>
+                    </div>
+                     <div class="result-card bg-background border border-divider rounded-lg p-3 space-y-2 shadow hover:shadow-xl hover:scale-[1.02] transition-all duration-200 focus-within:ring-2 focus-within:ring-primary-purple dark:focus-within:ring-secondary-yellow" data-nsfw="true" tabindex="0">
+                        <div class="nsfw-thumbnail-container">
+                            <img src="https://placehold.co/300x200/FF3399/FFFFFF?text=Adult+Art+2" alt="NSFW Art Thumbnail - Blurred" class="nsfw-thumbnail-blurred">
+                            <div class="nsfw-reveal-overlay" role="button" tabindex="0" aria-label="Click to reveal NSFW thumbnail">
+                                <i class="fas fa-eye-slash text-2xl mb-1"></i>
+                                <span class="text-sm">Click to reveal</span>
+                            </div>
+                            <span class="nsfw-badge">NSFW</span>
+                        </div>
+                        <h4 class="font-semibold text-text-primary truncate">Abstract Adult Artwork</h4>
+                        <p class="text-xs text-text-secondary">r/ArtNSFW <i class="fas fa-image mx-1"></i> 900 upvotes</p>
+                        <label class="flex items-center space-x-2 text-xs text-text-secondary"><input type="checkbox" class="form-checkbox rounded text-primary-purple dark:text-secondary-yellow" checked><span>Select</span></label>
+                    </div>
+                    <div class="result-card bg-background border border-divider rounded-lg p-3 space-y-2 shadow hover:shadow-xl hover:scale-[1.02] transition-all duration-200 focus-within:ring-2 focus-within:ring-primary-purple dark:focus-within:ring-secondary-yellow" tabindex="0">
+                        <div class="nsfw-thumbnail-container">
+                             <img src="https://placehold.co/300x200/9C27B0/FFFFFF?text=SFW+Media" alt="Media Thumbnail" class="w-full h-full object-cover">
+                        </div>
+                        <h4 class="font-semibold text-text-primary truncate">Awesome Cat Video Title</h4>
+                        <p class="text-xs text-text-secondary">r/aww <i class="fas fa-video mx-1"></i> 1.2k upvotes</p>
+                        <label class="flex items-center space-x-2 text-xs text-text-secondary"><input type="checkbox" class="form-checkbox rounded text-primary-purple dark:text-secondary-yellow"><span>Select</span></label>
+                    </div>
+                     <div class="result-card bg-background border border-divider rounded-lg p-3 space-y-2 shadow hover:shadow-xl hover:scale-[1.02] transition-all duration-200 focus-within:ring-2 focus-within:ring-primary-purple dark:focus-within:ring-secondary-yellow" data-nsfw="true" tabindex="0">
+                        <div class="nsfw-thumbnail-container">
+                            <img src="https://placehold.co/300x200/CC0000/FFFFFF?text=NSFW+Video+3" alt="NSFW Video Thumbnail - Blurred" class="nsfw-thumbnail-blurred">
+                            <div class="nsfw-reveal-overlay" role="button" tabindex="0" aria-label="Click to reveal NSFW thumbnail">
+                                <i class="fas fa-eye-slash text-2xl mb-1"></i>
+                                <span class="text-sm">Click to reveal</span>
+                            </div>
+                            <span class="nsfw-badge">NSFW</span>
+                        </div>
+                        <h4 class="font-semibold text-text-primary truncate">Exclusive NSFW Clip</h4>
+                        <p class="text-xs text-text-secondary">r/HotVideos <i class="fas fa-video mx-1"></i> 5.1k upvotes</p>
+                        <label class="flex items-center space-x-2 text-xs text-text-secondary"><input type="checkbox" class="form-checkbox rounded text-primary-purple dark:text-secondary-yellow" checked><span>Select</span></label>
+                    </div>
+                </div>
+                <div id="results-empty-state" class="text-center py-10 text-text-secondary hidden">
+                    <i class="fas fa-search text-4xl mb-3"></i>
+                    <p id="results-empty-state-message">No media found. Try adjusting your search or filters. <br> This is an NSFW downloader, so ensure your search terms are appropriate if seeking specific content.</p>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-text-primary">Synced Subreddits</h2>
+                    <button id="add-sync-subreddit-btn" class="btn-secondary text-sm px-3 py-1.5"><i class="fas fa-plus mr-1"></i>Add Subreddit to Sync</button>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center p-3 bg-background border border-divider rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <div>
+                            <p class="font-medium text-text-primary">r/nsfw_gifs <span class="nsfw-marker"><i class="fas fa-exclamation-triangle"></i> NSFW</span></p>
+                            <p class="text-xs text-text-secondary">Last checked: 2 hours ago, 15 new items</p>
+                        </div>
+                        <div class="space-x-2">
+                            <button class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300" aria-label="Sync now"><i class="fas fa-sync-alt"></i></button>
+                            <button class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300" aria-label="Remove sync"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                     <div class="flex justify-between items-center p-3 bg-background border border-divider rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <div>
+                            <p class="font-medium text-text-primary">r/AdultHumor <span class="nsfw-marker"><i class="fas fa-exclamation-triangle"></i> NSFW</span></p>
+                            <p class="text-xs text-text-secondary"><i class="fas fa-spinner fa-spin mr-1"></i> Checking for new items...</p>
+                        </div>
+                         <div class="space-x-2">
+                            <button class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300" aria-label="Sync now" disabled><i class="fas fa-sync-alt"></i></button>
+                            <button class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300" aria-label="Remove sync"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                     <div id="synced-subs-empty-state" class="text-center py-6 text-text-secondary hidden">
+                        <i class="fas fa-layer-group text-3xl mb-2"></i>
+                        <p>No NSFW subreddits are currently synced. Click 'Add Subreddit to Sync' to get started.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="queue-tab" class="tab-content hidden space-y-8">
+            <section class="card">
+                <h2 class="text-xl font-semibold text-text-primary mb-4">Active Download Queue</h2>
+                <div class="space-x-1 mb-4">
+                    <button class="btn-outline text-sm px-3 py-1.5"><i class="fas fa-pause mr-1"></i>Pause All</button>
+                    <button class="btn-outline text-sm px-3 py-1.5"><i class="fas fa-play mr-1"></i>Resume All</button>
+                    <button class="btn-outline text-sm px-3 py-1.5 text-red-500 border-red-500 hover:bg-red-500 hover:text-white dark:text-red-400 dark:border-red-400 dark:hover:bg-red-400 dark:hover:text-black"><i class="fas fa-times-circle mr-1"></i>Clear Queue</button>
+                </div>
+                <div class="space-y-4">
+                    <div class="p-4 bg-background border border-divider rounded-lg shadow-sm">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-2">
+                            <div class="flex items-center mb-2 sm:mb-0">
+                                <img src="https://placehold.co/60x40/FF0000/FFFFFF?text=NSFW" alt="thumbnail" class="w-16 h-10 object-cover rounded mr-3">
+                                <div>
+                                    <h4 class="font-medium text-text-primary truncate w-48 sm:w-auto" title="explicit_video_file.mp4">explicit_video_file.mp4</h4>
+                                    <p class="text-xs text-text-secondary">Source: r/RealAdultVideos <span class="nsfw-marker"><i class="fas fa-exclamation-triangle"></i> NSFW</span></p>
+                                </div>
+                            </div>
+                            <button class="btn-outline text-red-500 border-red-500 hover:bg-red-500 hover:text-white dark:text-red-400 dark:border-red-400 dark:hover:bg-red-400 dark:hover:text-black text-sm px-3 py-1.5 self-start sm:self-center" aria-label="Cancel download">
+                                <i class="fas fa-times mr-1"></i>Cancel
+                            </button>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                            <div class="bg-primary-purple dark:bg-secondary-yellow h-2.5 rounded-full" style="width: 45%"></div>
+                        </div>
+                        <p class="text-xs text-text-secondary text-right mt-1">45% - 2.5 MB/s - ETA: 2m 15s</p>
+                    </div>
+                    <div id="queue-empty-state" class="text-center py-6 text-text-secondary"> <i class="fas fa-hourglass-half text-3xl mb-2"></i>
+                        <p>Your download queue is empty.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2 class="text-xl font-semibold text-text-primary mb-4">Download History</h2>
+                <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                    <input type="text" placeholder="Search history..." class="input-styled flex-grow">
+                    <select class="input-styled sm:w-auto">
+                        <option>Status: All</option>
+                        <option>Status: Completed</option>
+                        <option>Status: Failed</option>
+                        <option>Status: Cancelled</option>
+                    </select>
+                     <select class="input-styled sm:w-auto">
+                        <option>Sort: Newest</option>
+                        <option>Sort: Oldest</option>
+                    </select>
+                </div>
+                <div class="space-y-3">
+                    <div class="p-3 bg-background border border-divider rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 text-xl mr-3"></i>
+                            <div>
+                                <p class="font-medium text-text-primary">completed_nsfw_file.jpg <span class="nsfw-marker"><i class="fas fa-exclamation-triangle"></i> NSFW</span></p>
+                                <p class="text-xs text-text-secondary">15.3 MB | 2024-05-27 10:30 AM | Source: r/nsfw_pics</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2 self-end sm:self-center">
+                            <button class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-xs" aria-label="Open file"><i class="fas fa-folder-open mr-1"></i>Open</button>
+                            <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 text-xs" aria-label="Remove from history"><i class="fas fa-trash-alt mr-1"></i>Remove</button>
+                        </div>
+                    </div>
+                     <div id="history-empty-state" class="text-center py-6 text-text-secondary"> <i class="fas fa-history text-3xl mb-2"></i>
+                        <p>No download history yet.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="settings-tab" class="tab-content hidden space-y-8">
+            <section class="card">
+                <h2 class="text-xl font-semibold text-text-primary mb-4">Reddit Integration</h2>
+                <div class="space-y-4">
+                    <p class="text-text-secondary">Status: <span class="font-semibold text-green-500">Connected as u/RedditUser123</span></p>
+                    <div>
+                        <label for="client-id" class="block text-sm font-medium text-text-secondary mb-1">Client ID</label>
+                        <input type="password" id="client-id" value="************" class="input-styled">
+                    </div>
+                    <div>
+                        <label for="client-secret" class="block text-sm font-medium text-text-secondary mb-1">Client Secret</label>
+                        <input type="password" id="client-secret" value="************" class="input-styled">
+                    </div>
+                    <button class="btn-primary w-full sm:w-auto"><i class="fab fa-reddit-alien mr-2"></i>Connect Reddit Account</button>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2 class="text-xl font-semibold text-text-primary mb-4">Download Preferences</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="download-dir" class="block text-sm font-medium text-text-secondary mb-1">Default Download Directory</label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="download-dir" value="/Users/YourName/Downloads/NSFWRedditGrabber" readonly class="input-styled flex-grow">
+                            <button class="btn-outline px-4" aria-label="Browse for download directory"><i class="fas fa-folder"></i></button>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="naming-pattern" class="block text-sm font-medium text-text-secondary mb-1">File Naming Pattern (Optional)</label>
+                        <input type="text" id="naming-pattern" placeholder="{subreddit}_{title}_{id}" class="input-styled">
+                    </div>
+                    <label class="flex items-center space-x-3 text-text-secondary">
+                        <span class="toggle-switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </span>
+                        <span>Create subfolder per subreddit</span>
+                    </label>
+                </div>
+            </section>
+            
+            <section class="card">
+                <h2 class="text-xl font-semibold text-text-primary mb-4">NSFW Content Handling</h2>
+                <div class="space-y-6">
+                    <div>
+                        <label class="flex items-center space-x-3 text-text-secondary">
+                            <span class="toggle-switch">
+                                <input type="checkbox" id="setting-nsfw-default-filter" checked> <span class="slider slider-nsfw-active"></span>
+                            </span>
+                            <span>Always treat content as potentially NSFW (Recommended for this app)</span>
+                        </label>
+                         <p class="text-xs text-text-secondary mt-1 pl-14">This ensures the "Show NSFW" filter on the download page is active by default.</p>
+                    </div>
+                    <div>
+                        <h4 class="text-md font-medium text-text-primary mb-2">NSFW Preview Display</h4>
+                        <div class="space-y-2 pl-4">
+                            <label class="flex items-center space-x-2 text-text-secondary">
+                                <input type="radio" name="nsfw-preview" value="blur" class="form-radio text-primary-purple dark:text-secondary-yellow" checked>
+                                <span>Always blur NSFW previews (until clicked)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 text-text-secondary">
+                                <input type="radio" name="nsfw-preview" value="clear" class="form-radio text-primary-purple dark:text-secondary-yellow">
+                                <span>Show NSFW previews clearly (if filter is active)</span>
+                            </label>
+                        </div>
+                    </div>
+                     <div>
+                        <label class="flex items-center space-x-3 text-text-secondary">
+                            <span class="toggle-switch">
+                                <input type="checkbox" id="setting-nsfw-download-confirm" checked>
+                                <span class="slider"></span>
+                            </span>
+                            <span>Require confirmation before downloading content marked NSFW</span>
+                        </label>
+                         <p class="text-xs text-text-secondary mt-1 pl-14">If enabled, a warning will appear before downloading NSFW items.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2 class="text-xl font-semibold text-text-primary mb-4">Application Settings</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label for="rate-limit" class="block text-sm font-medium text-text-secondary mb-1">Rate Limiting (requests/min)</label>
+                        <input type="number" id="rate-limit" value="60" class="input-styled">
+                    </div>
+                    <div>
+                        <label for="download-delay" class="block text-sm font-medium text-text-secondary mb-1">Delay Between Downloads (sec)</label>
+                        <input type="number" id="download-delay" value="1" class="input-styled">
+                    </div>
+                </div>
+                 <label class="flex items-center space-x-3 text-text-secondary mt-4">
+                    <span class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </span>
+                    <span>Show download completion notifications</span>
+                </label>
+            </section>
+
+            <section class="card">
+                <h2 class="text-xl font-semibold text-text-primary mb-4">Appearance</h2>
+                <p class="text-text-secondary mb-2">Theme Selection</p>
+                <div class="flex space-x-4">
+                    <label class="flex items-center space-x-2 text-text-secondary">
+                        <input type="radio" name="theme" value="light" class="form-radio text-primary-purple dark:text-secondary-yellow" checked>
+                        <span><i class="fas fa-sun mr-1"></i>Light</span>
+                    </label>
+                    <label class="flex items-center space-x-2 text-text-secondary">
+                        <input type="radio" name="theme" value="dark" class="form-radio text-primary-purple dark:text-secondary-yellow">
+                        <span><i class="fas fa-moon mr-1"></i>Dark</span>
+                    </label>
+                     <label class="flex items-center space-x-2 text-text-secondary">
+                        <input type="radio" name="theme" value="system" class="form-radio text-primary-purple dark:text-secondary-yellow">
+                        <span><i class="fas fa-desktop mr-1"></i>System</span>
+                    </label>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2 class="text-xl font-semibold text-text-primary mb-4">About NSFW Reddit Grabber</h2>
+                <p class="text-text-secondary">Version: 1.0.2 (NSFW Focused Mockup)</p>
+                <a href="#" class="text-primary-purple dark:text-secondary-yellow hover:underline">Project Page</a> |
+                <a href="#" class="text-primary-purple dark:text-secondary-yellow hover:underline">Credits</a>
+            </section>
+        </div>
+    </main>
+
+    <footer class="bg-surface border-t border-divider mt-auto">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-text-secondary text-sm">
+            &copy; 2024 NSFW Reddit Grabber. UI Mockup. For educational/demonstration purposes only.
+        </div>
+    </footer>
+
+    <div id="add-sync-subreddit-modal" class="modal-overlay hidden opacity-0" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="modal-content transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg leading-6 font-medium text-text-primary" id="modal-title">Add NSFW Subreddit to Sync</h3>
+                <button id="close-sync-modal-btn" type="button" class="text-text-secondary hover:text-text-primary" aria-label="Close modal">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label for="sync-subreddit-name" class="block text-sm font-medium text-text-secondary">Subreddit Name (e.g., r/nsfw_gifs)</label>
+                    <input type="text" id="sync-subreddit-name" class="input-styled mt-1">
+                </div>
+                <div>
+                    <label for="sync-frequency" class="block text-sm font-medium text-text-secondary">Sync Frequency</label>
+                    <select id="sync-frequency" class="input-styled mt-1">
+                        <option>Hourly</option>
+                        <option>Every 6 Hours</option>
+                        <option>Daily</option>
+                        <option>Weekly</option>
+                    </select>
+                </div>
+                <p class="text-xs text-text-secondary"><i class="fas fa-info-circle mr-1"></i> This app is focused on NSFW content. Ensure synced subreddits are appropriate.</p>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="cancel-sync-modal-btn" type="button" class="btn-outline px-4 py-2 text-sm">Cancel</button>
+                <button type="button" class="btn-primary px-4 py-2 text-sm">Save Sync</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="nsfw-warning-toast" class="toast-message toast-warning hidden opacity-0">
+        <div class="flex items-start">
+            <i class="fas fa-exclamation-triangle text-2xl mr-3"></i>
+            <div>
+                <h4 class="font-semibold">NSFW Content Warning</h4>
+                <p class="text-sm">You are about to download content marked as NSFW. Proceed with caution.</p>
+            </div>
+            <button id="close-nsfw-toast-btn" class="ml-4 text-lg font-semibold" aria-label="Close warning">&times;</button>
+        </div>
+    </div>
+
+
+    <script>
+        // Tab switching logic
+        const tabItems = document.querySelectorAll('.tab-item');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabItems.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabItems.forEach(item => item.classList.remove('tab-active'));
+                tabContents.forEach(content => content.classList.add('hidden'));
+                tab.classList.add('tab-active');
+                const targetTabContentId = tab.dataset.tab + '-tab';
+                document.getElementById(targetTabContentId).classList.remove('hidden');
+            });
+        });
+
+        // Theme toggle logic
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+        const lightIcon = themeToggle.querySelector('.fa-moon'); // Moon icon for light theme button state
+        const darkIcon = themeToggle.querySelector('.fa-sun'); // Sun icon for dark theme button state
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                htmlElement.classList.add('dark');
+                htmlElement.classList.remove('light');
+                lightIcon.classList.remove('inline'); 
+                lightIcon.classList.add('hidden');
+                darkIcon.classList.remove('hidden'); 
+                darkIcon.classList.add('inline');
+                localStorage.setItem('theme', 'dark');
+            } else { 
+                htmlElement.classList.add('light');
+                htmlElement.classList.remove('dark');
+                lightIcon.classList.remove('hidden'); 
+                lightIcon.classList.add('inline');
+                darkIcon.classList.remove('inline'); 
+                darkIcon.classList.add('hidden');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        const themeRadios = document.querySelectorAll('input[name="theme"]');
+        themeRadios.forEach(radio => {
+            radio.addEventListener('change', (event) => {
+                const selectedTheme = event.target.value;
+                if (selectedTheme === 'system') {
+                    localStorage.removeItem('theme');
+                    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                        applyTheme('dark');
+                    } else {
+                        applyTheme('light');
+                    }
+                } else {
+                    applyTheme(selectedTheme);
+                }
+            });
+        });
+
+        themeToggle.addEventListener('click', () => {
+            const currentThemeIsDark = htmlElement.classList.contains('dark');
+            const newTheme = currentThemeIsDark ? 'light' : 'dark';
+            applyTheme(newTheme);
+            document.querySelector(`input[name="theme"][value="${newTheme}"]`).checked = true;
+        });
+
+        const storedTheme = localStorage.getItem('theme');
+        const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (storedTheme) {
+            applyTheme(storedTheme);
+            document.querySelector(`input[name="theme"][value="${storedTheme}"]`).checked = true;
+        } else if (systemPrefersDark) {
+            applyTheme('dark');
+            document.querySelector('input[name="theme"][value="system"]').checked = true;
+        } else {
+            applyTheme('light');
+            document.querySelector('input[name="theme"][value="system"]').checked = true;
+        }
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            const currentThemeSetting = document.querySelector('input[name="theme"]:checked').value;
+            if (currentThemeSetting === 'system') {
+                applyTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+
+        // NSFW Filter Toggle Logic
+        const nsfwFilterToggle = document.getElementById('nsfw-filter-toggle');
+        const resultsGrid = document.getElementById('results-grid');
+        const resultsEmptyState = document.getElementById('results-empty-state');
+        const resultsEmptyStateMessage = document.getElementById('results-empty-state-message');
+        // Default NSFW filter from settings
+        const nsfwDefaultFilterSetting = document.getElementById('setting-nsfw-default-filter');
+        if (nsfwDefaultFilterSetting && nsfwFilterToggle) {
+             nsfwFilterToggle.checked = nsfwDefaultFilterSetting.checked; // Set main toggle based on settings default
+        }
+
+
+        function updateResultsVisibility() {
+            if (!resultsGrid || !nsfwFilterToggle || !resultsEmptyState || !resultsEmptyStateMessage) return;
+
+            const showNsfw = nsfwFilterToggle.checked;
+            const allResultCards = resultsGrid.querySelectorAll('.result-card');
+            let visibleCardsCount = 0;
+
+            allResultCards.forEach(card => {
+                const isNsfwCard = card.dataset.nsfw === 'true';
+                if (isNsfwCard) {
+                    if (showNsfw) {
+                        card.classList.remove('hidden');
+                        card.setAttribute('aria-hidden', 'false');
+                        visibleCardsCount++;
+                    } else {
+                        card.classList.add('hidden');
+                        card.setAttribute('aria-hidden', 'true');
+                    }
+                } else { // SFW card
+                    card.classList.remove('hidden'); 
+                    card.setAttribute('aria-hidden', 'false');
+                    visibleCardsCount++;
+                }
+            });
+            
+            if (visibleCardsCount === 0) {
+                resultsEmptyState.classList.remove('hidden');
+                 if (!showNsfw && Array.from(allResultCards).some(c => c.dataset.nsfw === 'true')) {
+                     resultsEmptyStateMessage.innerHTML = "No SFW results found. This is an NSFW grabber; ensure 'Show NSFW' is enabled to see relevant content.";
+                } else {
+                     resultsEmptyStateMessage.innerHTML = "No media found. Try adjusting your search terms. <br>This is an NSFW grabber; ensure your search is targeted accordingly.";
+                }
+            } else {
+                resultsEmptyState.classList.add('hidden');
+            }
+        }
+
+        if (nsfwFilterToggle) {
+            nsfwFilterToggle.addEventListener('change', updateResultsVisibility);
+            updateResultsVisibility(); 
+        }
+
+        // NSFW Thumbnail Reveal Logic
+        if (resultsGrid) {
+            resultsGrid.addEventListener('click', function(event) {
+                const revealButton = event.target.closest('.nsfw-reveal-overlay');
+                if (revealButton) {
+                    const container = revealButton.closest('.nsfw-thumbnail-container');
+                    if (container) {
+                        container.classList.add('revealed');
+                        const img = container.querySelector('img');
+                        if(img) img.focus();
+                    }
+                }
+            });
+            resultsGrid.addEventListener('keydown', function(event) {
+                const revealButton = event.target.closest('.nsfw-reveal-overlay');
+                if (revealButton && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault();
+                    const container = revealButton.closest('.nsfw-thumbnail-container');
+                    if (container) {
+                        container.classList.add('revealed');
+                        const img = container.querySelector('img');
+                        if(img) img.focus();
+                    }
+                }
+            });
+        }
+
+
+        // Add Subreddit to Sync Modal Logic
+        const addSyncBtn = document.getElementById('add-sync-subreddit-btn');
+        const syncModal = document.getElementById('add-sync-subreddit-modal');
+        const closeSyncModalBtn = document.getElementById('close-sync-modal-btn');
+        const cancelSyncModalBtn = document.getElementById('cancel-sync-modal-btn');
+
+        if (addSyncBtn && syncModal && closeSyncModalBtn && cancelSyncModalBtn) {
+            addSyncBtn.addEventListener('click', () => {
+                syncModal.classList.remove('hidden');
+                setTimeout(() => syncModal.classList.remove('opacity-0'), 10); 
+            });
+            const closeTheSyncModal = () => {
+                syncModal.classList.add('opacity-0');
+                setTimeout(() => syncModal.classList.add('hidden'), 300);
+            };
+            closeSyncModalBtn.addEventListener('click', closeTheSyncModal);
+            cancelSyncModalBtn.addEventListener('click', closeTheSyncModal);
+            window.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && !syncModal.classList.contains('hidden')) {
+                    closeTheSyncModal();
+                }
+            });
+        }
+
+        // Mock NSFW Warning Toast
+        const nsfwWarningToast = document.getElementById('nsfw-warning-toast');
+        const closeNsfwToastBtn = document.getElementById('close-nsfw-toast-btn');
+        
+        function showNsfwWarning() { 
+            if(nsfwWarningToast) {
+                nsfwWarningToast.classList.remove('hidden');
+                setTimeout(() => nsfwWarningToast.classList.remove('opacity-0'), 10);
+            }
+        }
+        if (closeNsfwToastBtn) {
+            closeNsfwToastBtn.addEventListener('click', () => {
+                nsfwWarningToast.classList.add('opacity-0');
+                setTimeout(() => nsfwWarningToast.classList.add('hidden'), 300);
+            });
+        }
+        // Example: setTimeout(showNsfwWarning, 3000); // For testing
+
+        // Enable/Disable Time Period Select
+        const sortBySelect = document.querySelector('#download-tab section:nth-child(2) select:first-of-type'); 
+        const timePeriodSelect = document.getElementById('time-period-select');
+
+        function toggleTimePeriodSelect() {
+            if (!sortBySelect || !timePeriodSelect) return;
+            const selectedSort = sortBySelect.value.toLowerCase();
+            if (selectedSort.includes('top') || selectedSort.includes('controversial')) {
+                timePeriodSelect.disabled = false;
+                timePeriodSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                timePeriodSelect.disabled = true;
+                timePeriodSelect.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+        if (sortBySelect) {
+            sortBySelect.addEventListener('change', toggleTimePeriodSelect);
+            toggleTimePeriodSelect(); // Initial check
+        }
+
+        // Mock check for empty states on load
+        function checkInitialEmptyStates() {
+            updateResultsVisibility(); // This handles results empty state
+
+            const syncedSubsList = document.querySelector('#download-tab section:nth-child(5) .space-y-3'); // Adjusted selector
+            const syncedSubsEmptyState = document.getElementById('synced-subs-empty-state');
+            if (syncedSubsList && syncedSubsEmptyState) {
+                if (syncedSubsList.querySelectorAll('.flex.justify-between.items-center').length === 0 ) { 
+                    syncedSubsEmptyState.classList.remove('hidden');
+                } else {
+                    syncedSubsEmptyState.classList.add('hidden');
+                }
+            }
+            
+            const queueList = document.querySelector('#queue-tab section:first-of-type .space-y-4');
+            const queueEmptyState = document.getElementById('queue-empty-state');
+             if (queueList && queueEmptyState) {
+                if (queueList.querySelectorAll('.p-4.bg-background').length === 0 ) {
+                    queueEmptyState.classList.remove('hidden');
+                } else {
+                    queueEmptyState.classList.add('hidden');
+                }
+            }
+
+            const historyList = document.querySelector('#queue-tab section:last-of-type .space-y-3');
+            const historyEmptyState = document.getElementById('history-empty-state');
+            if (historyList && historyEmptyState) {
+                 if (historyList.querySelectorAll('.p-3.bg-background').length === 0 ) {
+                    historyEmptyState.classList.remove('hidden');
+                } else {
+                    historyEmptyState.classList.add('hidden');
+                }
+            }
+        }
+        checkInitialEmptyStates();
+
+    </script>
+</body>
+</html>

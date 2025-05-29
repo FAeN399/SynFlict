@@ -1,0 +1,31 @@
+declare const styles: {
+  readonly 'forgeContainer': string;
+  readonly 'forgeArea': string;
+  readonly 'forgeSocketsContainer': string;
+  readonly 'forgeSocket': string;
+  readonly 'empty': string;
+  readonly 'focused': string;
+  readonly 'highlighted': string;
+  readonly 'hasCard': string;
+  readonly 'forgeCenter': string;
+  readonly 'forgeActive': string;
+  readonly 'particleContainer': string;
+  readonly 'particle': string;
+  readonly 'cardPlacingAnimation': string;
+  readonly 'connectionActivating': string;
+  readonly 'forgeSuccess': string;
+  readonly 'connectionLine': string;
+  readonly 'validConnection': string;
+  readonly 'invalidConnection': string;
+  readonly 'hexCard': string;
+  readonly 'selected': string;
+  readonly 'dragging': string;
+  readonly 'hexCardName': string;
+  readonly 'hexCardType': string;
+  readonly 'cardInventory': string;
+  readonly 'forgeButton': string;
+  readonly 'forging': string;
+  readonly 'accessibilityMode': string;
+};
+
+export default styles;

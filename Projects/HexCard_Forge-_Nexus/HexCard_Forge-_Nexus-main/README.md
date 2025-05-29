@@ -12,14 +12,7 @@ A dark-themed, arcane-tech card and map strategy game. Features include:
 - Modern UI components
 - Responsive design
 
-### 2. Inner Wild
-A game project featuring:
-- Basic movement systems
-- Animation framework
-- Y-sorting for proper layering
-- Character and environment interactions
-
-### 3. Geometry Forge
+### 2. Geometry Forge
 A creative tool for:
 - Sacred geometry creation
 - Space ship design

@@ -1,0 +1,17 @@
+{
+  "name": "Celtic Cross",
+  "description": "Classic 10-card spread for deep insight.",
+  "fields": [
+    { "label": "Position 1", "type": "card" },
+    { "label": "Position 2", "type": "card" },
+    { "label": "Position 3", "type": "card" },
+    { "label": "Position 4", "type": "card" },
+    { "label": "Position 5", "type": "card" },
+    { "label": "Position 6", "type": "card" },
+    { "label": "Position 7", "type": "card" },
+    { "label": "Position 8", "type": "card" },
+    { "label": "Position 9", "type": "card" },
+    { "label": "Position 10", "type": "card" },
+    { "label": "Notes", "type": "markdown" }
+  ]
+}

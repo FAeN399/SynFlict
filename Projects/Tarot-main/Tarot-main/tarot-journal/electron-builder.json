@@ -1,0 +1,38 @@
+{
+  "appId": "com.tarotjournal.app",
+  "productName": "Tarot Journal",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "dist/**/*",
+    "!**/node_modules/**/*"
+  ],
+  "asar": true,
+  "publish": null,
+  "win": {
+    "target": ["nsis"],
+    "icon": "build/icon.ico",
+    "certificateFile": "certificate.pfx",
+    "certificatePassword": "${env.CERTIFICATE_PASSWORD}",
+    "publisherName": "Tarot Journal Developer"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Tarot Journal",
+    "artifactName": "TarotJournalSetup-${version}.${ext}"
+  },
+  "mac": {
+    "category": "public.app-category.lifestyle",
+    "target": ["dmg"],
+    "icon": "build/icon.icns"
+  },
+  "linux": {
+    "target": ["AppImage", "deb"],
+    "icon": "build/icon.png",
+    "category": "Utility"
+  }
+}

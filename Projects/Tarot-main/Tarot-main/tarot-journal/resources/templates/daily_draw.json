@@ -1,0 +1,8 @@
+{
+  "name": "Daily Draw",
+  "description": "A single-card daily reading.",
+  "fields": [
+    { "label": "Card", "type": "card" },
+    { "label": "Notes", "type": "markdown" }
+  ]
+}

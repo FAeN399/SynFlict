@@ -1,0 +1,14 @@
+/* Card gallery grid styling */
+.card-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.card-gallery img {
+  width: 100%;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  object-fit: cover;
+}

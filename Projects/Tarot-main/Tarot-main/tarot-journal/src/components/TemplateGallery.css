@@ -1,0 +1,26 @@
+.template-gallery {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.template-card {
+  background: #fafafa;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  width: 150px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.template-card:hover {
+  border-color: #646cff;
+}
+
+.template-card.selected {
+  border-color: #646cff;
+  background: #e8e8ff;
+}

@@ -1,0 +1,56 @@
+.app-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 1.5em;
+  margin-bottom: 2rem;
+  color: #646cff;
+}
+
+.card {
+  padding: 2em;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #646cff;
+  color: white;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  margin: 1rem 0;
+}
+
+button:hover {
+  border-color: #646cff;
+  background-color: #535bf2;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+.version-info {
+  margin-top: 2rem;
+  font-size: 0.8em;
+  color: #888;
+  text-align: left;
+}

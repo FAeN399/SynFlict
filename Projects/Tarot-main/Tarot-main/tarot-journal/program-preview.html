@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tarot Journal Preview</title>
+  <style>
+    body { font-family: sans-serif; background: #f0f0f0; margin: 0; padding: 2rem; }
+    .search-bar { margin-bottom: 1rem; }
+    .search-bar input { width: 100%; padding: 0.5rem; font-size: 1rem; }
+    .search-results { list-style: none; padding: 0; margin-bottom: 2rem; }
+    .search-results li { padding: 0.5rem 0; border-bottom: 1px solid #ddd; }
+    .app-container { max-width: 800px; margin: 0 auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
+    h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .subtitle { font-size: 1.2rem; color: #646cff; margin-bottom: 1.5rem; }
+    .card { background: #fafafa; padding: 1.5rem; border-radius: 6px; margin-bottom: 1.5rem; }
+    .card p { margin-bottom: 1rem; }
+    button { background: #646cff; color: white; border: none; padding: 0.6em 1.2em; font-size: 1rem; border-radius: 6px; cursor: pointer; }
+    .version-info { margin-top: 1rem; text-align: left; display: inline-block; }
+    .version-info p { margin: 0 0 0.5rem 0; font-weight: bold; }
+    .version-info ul { padding-left: 1.2rem; margin: 0; }
+    .card-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px,1fr)); gap: 1rem; margin-top: 2rem; }
+    .card-gallery img { width: 100%; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+  <div class="search-bar">
+    <input type="text" placeholder="Search readings...">
+  </div>
+  <ul class="search-results">
+    <li>01-The-Magician - minor arcana</li>
+    <li>12-The-Hanged-Man - major arcana</li>
+  </ul>
+
+  <div class="app-container">
+    <h1>Hello Offline</h1>
+    <p class="subtitle">Welcome to Tarot Journal</p>
+
+    <div class="card">
+      <p>
+        This application works completely offline.<br>
+        All your data is stored locally on your device.
+      </p>
+      <button>Count is 0</button>
+
+      <div class="version-info">
+        <p>Using:</p>
+        <ul>
+          <li>Chrome <span id="chrome-version">104.0</span></li>
+          <li>Node <span id="node-version">16.14.0</span></li>
+          <li>Electron <span id="electron-version">19.0.15</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Mock card gallery preview -->
+    <div class="card-gallery">
+      <img src="resources/decks/rider-waite/00-The-Fool.png" alt="The Fool">
+      <img src="resources/decks/rider-waite/01-The-Magician.png" alt="The Magician">
+      <img src="resources/decks/rider-waite/02-The-High-Priestess.png" alt="The High Priestess">
+      <img src="resources/decks/rider-waite/03-The-Empress.png" alt="The Empress">
+      <img src="resources/decks/rider-waite/04-The-Emperor.png" alt="The Emperor">
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: theme('colors.primary.600');
+    --color-primary-hover: theme('colors.primary.700');
+    --color-secondary: theme('colors.secondary.300');
+    --color-secondary-hover: theme('colors.secondary.400');
+    --color-text-on-primary: theme('colors.white');
+    --color-text-on-secondary: theme('colors.primary.800');
+    
+    /* Add transition defaults */
+    --transition-duration: 300ms;
+    --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.primary.300') theme('colors.gray.100');
+  }
+  
+  /* Dark mode variables */
+  .dark {
+    --color-primary: theme('colors.primary.500');
+    --color-primary-hover: theme('colors.primary.600');
+    --color-secondary: theme('colors.secondary.400');
+    --color-secondary-hover: theme('colors.secondary.500');
+    --color-text-on-primary: theme('colors.white');
+    --color-text-on-secondary: theme('colors.primary.900');
+    
+    /* Dark mode scrollbar */
+    scrollbar-color: theme('colors.primary.500') theme('colors.gray.800');
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Custom scrollbar for webkit browsers */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary-300 dark:bg-primary-500 rounded-full;
+  }
+}
+
+@layer components {
+  /* Button styles */
+  .btn {
+    @apply px-6 py-3 rounded-lg font-semibold shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-300 ease-in-out transform hover:scale-105 inline-flex items-center justify-center;
+  }
+  
+  .btn-primary {
+    @apply bg-primary-600 dark:bg-primary-500 text-white hover:bg-primary-700 dark:hover:bg-primary-600 focus:ring-primary-500 dark:focus:ring-primary-400;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary-300 dark:bg-secondary-400 text-primary-800 dark:text-primary-900 hover:bg-secondary-400 dark:hover:bg-secondary-500 focus:ring-secondary-300 dark:focus:ring-secondary-400;
+  }
+  
+  .btn-ghost {
+    @apply bg-transparent text-primary-600 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-800 dark:hover:bg-opacity-30 focus:ring-primary-500 dark:focus:ring-primary-400;
+  }
+  
+  .btn-danger {
+    @apply bg-red-500 text-white hover:bg-red-600 focus:ring-red-400;
+  }
+  
+  /* Card styles */
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-xl dark:shadow-primary-900/50 overflow-hidden transition-all duration-300 ease-in-out hover:shadow-2xl dark:hover:shadow-primary-800/60 border border-primary-100 dark:border-primary-700;
+  }
+  
+  /* Form input styles */
+  .input {
+    @apply w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-primary-500 dark:focus:border-primary-400 transition-shadow duration-200 shadow-sm bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400;
+  }
+  
+  /* Alert styles */
+  .alert {
+    @apply p-4 rounded-lg mb-4 flex items-start;
+  }
+  
+  .alert-icon {
+    @apply mr-3 text-xl;
+  }
+  
+  .alert-info {
+    @apply bg-primary-100 dark:bg-primary-900 dark:bg-opacity-40 text-primary-800 dark:text-primary-200 border-l-4 border-primary-500 dark:border-primary-400;
+  }
+  
+  .alert-success {
+    @apply bg-green-100 dark:bg-green-900 dark:bg-opacity-40 text-green-800 dark:text-green-200 border-l-4 border-green-500 dark:border-green-400;
+  }
+  
+  .alert-warning {
+    @apply bg-secondary-100 dark:bg-secondary-900 dark:bg-opacity-40 text-secondary-800 dark:text-secondary-200 border-l-4 border-secondary-500 dark:border-secondary-400;
+  }
+  
+  .alert-error {
+    @apply bg-red-100 dark:bg-red-900 dark:bg-opacity-40 text-red-800 dark:text-red-200 border-l-4 border-red-500 dark:border-red-400;
+  }
+  
+  /* Toggle switch for dark mode */
+  .toggle-switch {
+    @apply relative inline-block w-12 h-6 cursor-pointer;
+  }
+  
+  .toggle-switch input {
+    @apply opacity-0 w-0 h-0;
+  }
+  
+  .toggle-slider {
+    @apply absolute top-0 left-0 right-0 bottom-0 bg-gray-300 dark:bg-gray-600 rounded-full transition-colors duration-300;
+  }
+  
+  .toggle-slider:before {
+    @apply absolute content-[''] h-5 w-5 left-0.5 bottom-0.5 bg-white rounded-full transition-transform duration-300;
+  }
+  
+  input:checked + .toggle-slider {
+    @apply bg-primary-600 dark:bg-primary-500;
+  }
+  
+  input:checked + .toggle-slider:before {
+    @apply transform translate-x-6 bg-secondary-300;
+  }
+  
+  /* Ripple effect */
+  .ripple {
+    @apply absolute rounded-full bg-white bg-opacity-40 transform scale-0 animate-ripple;
+  }
+}

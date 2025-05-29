@@ -1,27 +1,32 @@
 # HexCard Forge Nexus
 
-A collection of interconnected projects focused on arcane-tech strategy games and creative tools.
+A dark-themed, arcane-tech card and map strategy game that combines tactical gameplay with mystical elements.
 
-## Projects
+## Features
 
-### 1. HexCard Forge
-A dark-themed, arcane-tech card and map strategy game. Features include:
-- Hexagonal card system
-- Strategic map gameplay
+- Hexagonal card system for strategic gameplay
+- Interactive map-based battles
 - Dark theme with arcane aesthetics
-- Modern UI components
-- Responsive design
-
-### 2. Geometry Forge
-A creative tool for:
-- Sacred geometry creation
-- Space ship design
-- Interactive 3D modeling
-- Custom shader support
+- Modern UI components with responsive design
+- Rich lore and immersive world-building
 
 ## Getting Started
 
-Each project has its own directory with specific setup instructions. Please refer to the individual project folders for detailed documentation.
+### Prerequisites
+- Python 3.8 or higher
+- PySide6/PyQt6 for desktop application
+- Modern web browser for web components
+
+### Installation
+1. Clone the repository
+2. Install dependencies
+3. Follow the setup instructions in the documentation
+
+## Project Structure
+
+- `UI_in_HTML.html` - UI style guide and component library
+- `UI_INTEGRATION_PLAN.md` - Implementation plan for desktop app
+- Additional documentation and source files
 
 ## Contributing
 

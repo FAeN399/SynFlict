@@ -1205,60 +1205,53 @@ class ModernMainWindow(QMainWindow):
         else:
             return f"{size:.2f} {units[unit_index]}"
     
-    def _add_to_download_queue(self, download_id, item_data):
-        """Add an item to the download queue UI"""
-        if not hasattr(self, 'queue_table'):
-            return
-            
-        # Add to our tracking dictionary
-        self.download_items[download_id] = item_data
-        
-        # Get current row count
+    def _add_to_download_queue(self, download_id, result):
+        """Add a download to the queue table"""
+        # Create row
         row = self.queue_table.rowCount()
         self.queue_table.insertRow(row)
         
-        # Title column
-        title_item = QTableWidgetItem(item_data.get('title', 'Unknown'))
-        title_item.setToolTip(item_data.get('title', ''))
+        # Title
+        title_item = QTableWidgetItem(result.get('title', 'Unknown'))
+        title_item.setData(Qt.UserRole, download_id)  # Store download ID in the item
         self.queue_table.setItem(row, 0, title_item)
         
-        # Type column
-        type_item = QTableWidgetItem(item_data.get('type', 'Unknown'))
-        self.queue_table.setItem(row, 1, type_item)
+        # Status
+        status_item = QTableWidgetItem('Queued')
+        self.queue_table.setItem(row, 1, status_item)
         
-        # Progress column with progress bar
-        progress_widget = QWidget()
-        progress_layout = QVBoxLayout(progress_widget)
-        progress_layout.setContentsMargins(5, 2, 5, 2)
-        progress_bar = QProgressBar()
-        progress_bar.setRange(0, 100)
-        progress_bar.setValue(0)
-        progress_bar.setObjectName(f"progress_{download_id}")
-        progress_layout.addWidget(progress_bar)
-        self.queue_table.setCellWidget(row, 2, progress_widget)
+        # Progress
+        progress_item = QTableWidgetItem('0%')
+        self.queue_table.setItem(row, 2, progress_item)
         
-        # Status column
-        status_item = QTableWidgetItem("Queued")
-        status_item.setObjectName(f"status_{download_id}")
-        self.queue_table.setItem(row, 3, status_item)
-        
-        # Actions column with cancel button
+        # Actions
         actions_widget = QWidget()
         actions_layout = QHBoxLayout(actions_widget)
-        actions_layout.setContentsMargins(5, 2, 5, 2)
+        actions_layout.setContentsMargins(0, 0, 0, 0)
         
-        cancel_button = QPushButton("Cancel")
+        # Cancel button
+        cancel_button = QPushButton('Cancel')
         cancel_button.setObjectName(f"cancel_{download_id}")
         cancel_button.clicked.connect(lambda: self._cancel_download(download_id))
         actions_layout.addWidget(cancel_button)
         
-        self.queue_table.setCellWidget(row, 4, actions_widget)
+        # Retry button (initially hidden)
+        retry_button = QPushButton('Retry')
+        retry_button.setObjectName(f"retry_{download_id}")
+        retry_button.clicked.connect(lambda: self._retry_download(download_id))
+        retry_button.setVisible(False)
+        actions_layout.addWidget(retry_button)
         
-        # Make sure the Queue & History tab is visible
-        self.main_tabs.setCurrentIndex(1)
+        actions_layout.addStretch()
+        self.queue_table.setCellWidget(row, 3, actions_widget)
         
-        # Return to the first tab
-        self.statusBar().showMessage(f"Added '{item_data.get('title', 'Unknown')}' to download queue", 3000)
+        # Set row height
+        self.queue_table.setRowHeight(row, 40)
+        
+        # Store the download item data for later use
+        if not hasattr(self, 'download_items'):
+            self.download_items = {}
+        self.download_items[download_id] = result
     
     def _update_download_progress(self, download_id, progress, status):
         """Update the progress of a download in the UI"""
@@ -1267,15 +1260,30 @@ class ModernMainWindow(QMainWindow):
             
         # Find the row with this download ID
         for row in range(self.queue_table.rowCount()):
-            progress_bar = self.queue_table.cellWidget(row, 2).findChild(QProgressBar, f"progress_{download_id}")
-            if progress_bar:
-                # Update progress bar
-                progress_bar.setValue(progress)
-                
-                # Update status text
-                status_item = self.queue_table.item(row, 3)
+            title_item = self.queue_table.item(row, 0)
+            if title_item and title_item.data(Qt.UserRole) == download_id:
+                # Update status
+                status_item = self.queue_table.item(row, 1)
                 if status_item:
                     status_item.setText(status)
+                
+                # Update progress
+                progress_item = self.queue_table.item(row, 2)
+                if progress_item:
+                    progress_item.setText(f"{progress}%")
+                
+                # Update actions
+                actions_widget = self.queue_table.cellWidget(row, 3)
+                if actions_widget:
+                    # Show/hide retry button based on status
+                    retry_button = actions_widget.findChild(QPushButton, f"retry_{download_id}")
+                    if retry_button:
+                        retry_button.setVisible(status == "Failed")
+                    
+                    # Show/hide cancel button based on status
+                    cancel_button = actions_widget.findChild(QPushButton, f"cancel_{download_id}")
+                    if cancel_button:
+                        cancel_button.setVisible(status not in ["Completed", "Failed", "Cancelled"])
                 break
     
     def _download_completed(self, download_id, success, message):
@@ -1384,6 +1392,28 @@ class ModernMainWindow(QMainWindow):
                         if status_item:
                             status_item.setText("Cancelled")
                         break
+
+    def cleanup(self):
+        """Clean up resources before closing"""
+        # Stop and clean up worker threads
+        if self.search_worker and self.search_worker.isRunning():
+            self.search_worker.stop()
+            self.search_worker.wait()
+            self.search_worker.deleteLater()
+            
+        if self.download_worker and self.download_worker.isRunning():
+            self.download_worker.stop()
+            self.download_worker.wait()
+            self.download_worker.deleteLater()
+            
+        # Clean up backend resources
+        if self.backend:
+            self.backend.cleanup()
+
+    def closeEvent(self, event):
+        """Handle window close event"""
+        self.cleanup()
+        event.accept()
 
 # Application entry point
 if __name__ == '__main__':

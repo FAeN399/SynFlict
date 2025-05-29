@@ -159,38 +159,36 @@ class GlobalRedditSearch:
             logger.info(f"Searching Reddit for: {query}, sort: {praw_sort}, time: {praw_time}")
             
             # Perform the search - we'll rely on PRAW's internal rate limiting
-            search_results = self.reddit.subreddit("all").search(
-                query=query,
-                sort=praw_sort,
-                time_filter=praw_time,
-                limit=limit_param
-            )
-            
-            # Add a debug log to verify NSFW parameters
-            logger.debug(
-                "NSFW flags → allow:%s  only:%s", 
-                allow_nsfw_param, 
-                only_nsfw_param
-            )
-            
-            # Process and filter results
             count = 0
-            for submission in search_results:
-                # Use the robust NSFW filter helper
-                if not self._passes_nsfw_filter(submission, allow_nsfw_param, only_nsfw_param):
-                    continue
-                
-                # Apply custom filter function if provided
-                if filter_func and not filter_func(submission):
-                    continue
-                
-                # Yield the submission and increment counter
-                yield submission
-                count += 1
-                
-                # Stop if we've reached the limit
-                if count >= limit_param:
+            after = None
+            seen_ids = set()
+            while count < limit_param:
+                search_results = self.reddit.subreddit("all").search(
+                    query=query,
+                    sort=praw_sort,
+                    time_filter=praw_time,
+                    limit=100,  # Max per request
+                    params={'after': after} if after else {}
+                )
+                batch = list(search_results)
+                if not batch:
                     break
+                for submission in batch:
+                    # Avoid duplicates
+                    if submission.id in seen_ids:
+                        continue
+                    seen_ids.add(submission.id)
+                    if not self._passes_nsfw_filter(submission, allow_nsfw_param, only_nsfw_param):
+                        continue
+                    if filter_func and not filter_func(submission):
+                        continue
+                    yield submission
+                    count += 1
+                    after = submission.fullname
+                    if count >= limit_param:
+                        break
+                if len(batch) < 100:
+                    break  # No more results
                         
         except PrawcoreException as e:
             logger.error(f"Reddit API error: {str(e)}")

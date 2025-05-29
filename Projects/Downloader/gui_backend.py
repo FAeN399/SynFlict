@@ -190,6 +190,12 @@ class GUIBackend:
                 
             # Try to get a real Reddit instance
             try:
+                # Check if we have username and password in config
+                config = load_config(self.config_path)
+                username = username or config.get('reddit_username')
+                password = password or config.get('reddit_password')
+                
+                # Use user authentication if we have credentials
                 self.reddit = get_reddit_instance(user_auth=bool(username and password), mock=False)
                 
                 # Verify connection with a simple API call
@@ -392,3 +398,30 @@ class GUIBackend:
         """
         if self.download_manager:
             self.download_manager.shutdown()
+    
+    def cleanup(self):
+        """
+        Clean up resources before shutting down.
+        """
+        try:
+            # Stop any ongoing downloads
+            if hasattr(self, 'download_manager'):
+                self.download_manager.stop_all_downloads()
+            
+            # Close database connection
+            if hasattr(self, 'db'):
+                self.db.close()
+            
+            # Clear any cached data
+            if hasattr(self, 'global_search'):
+                self.global_search = None
+            
+            # Clear Reddit instance
+            if hasattr(self, 'reddit'):
+                self.reddit = None
+                
+            logger.info("Backend resources cleaned up successfully")
+        except Exception as e:
+            logger.error(f"Error during cleanup: {str(e)}")
+            import traceback
+            traceback.print_exc()

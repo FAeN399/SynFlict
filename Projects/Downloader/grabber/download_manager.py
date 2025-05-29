@@ -250,7 +250,7 @@ class DownloadManager:
     
     def _download_item(self, item: DownloadItem) -> bool:
         """
-        Download an item.
+        Download a single item.
         
         Args:
             item: DownloadItem to download
@@ -259,48 +259,83 @@ class DownloadManager:
             True if download was successful, False otherwise
         """
         try:
-            # Create output directory
-            item.output_dir.mkdir(parents=True, exist_ok=True)
+            # Create output directory if it doesn't exist
+            try:
+                item.output_dir.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                logger.error(f"Failed to create output directory {item.output_dir}: {str(e)}")
+                item.error_message = f"Failed to create output directory: {str(e)}"
+                return False
             
             # Generate output filename
-            url_filename = os.path.basename(item.url.split("?")[0])
-            
-            # Create a unique filename using metadata
-            if item.metadata.get("title"):
-                # Clean the title for use as a filename
-                title = "".join(c if c.isalnum() or c in " -_." else "_" for c in item.metadata["title"])
-                title = title[:50]  # Limit length
+            try:
+                # Clean filename
+                safe_title = "".join(c for c in item.metadata.get("title", "unknown") if c.isalnum() or c in " -_.")
+                safe_title = safe_title[:100]  # Limit length
                 
-                # Use title and ID as filename
-                if is_video_url(item.url):
-                    output_filename = f"{title}_{item.item_id}"
-                    output_path = item.output_dir / output_filename
-                else:
-                    ext = os.path.splitext(url_filename)[1] or ".jpg"
-                    output_filename = f"{title}_{item.item_id}{ext}"
-                    output_path = item.output_dir / output_filename
-            else:
-                # Use URL filename
-                output_path = item.output_dir / url_filename
+                # Get file extension from URL
+                ext = pathlib.Path(item.url).suffix
+                if not ext:
+                    # Default to .jpg for images, .mp4 for videos
+                    ext = ".mp4" if is_video_url(item.url) else ".jpg"
+                
+                # Create output path
+                output_path = item.output_dir / f"{safe_title}{ext}"
+                
+                # Ensure unique filename
+                counter = 1
+                while output_path.exists():
+                    output_path = item.output_dir / f"{safe_title}_{counter}{ext}"
+                    counter += 1
+                    
+            except Exception as e:
+                logger.error(f"Failed to generate output filename: {str(e)}")
+                item.error_message = f"Failed to generate filename: {str(e)}"
+                return False
             
-            # Download based on media type
+            # Download based on type
             success = False
-            if is_video_url(item.url):
-                success = download_video(item.url, item.output_dir, output_path.stem)
-                
-                # Try to find the actual downloaded file
-                if success:
-                    for ext in [".mp4", ".webm", ".mov", ".mkv"]:
-                        potential_file = item.output_dir / f"{output_path.stem}{ext}"
-                        if potential_file.exists():
-                            item.download_path = str(potential_file)
-                            item.file_size = potential_file.stat().st_size
-                            break
-            else:
-                success = download_image(item.url, output_path)
-                if success:
-                    item.download_path = str(output_path)
-                    item.file_size = output_path.stat().st_size
+            try:
+                if is_video_url(item.url):
+                    success = download_video(item.url, item.output_dir, output_path.stem)
+                    
+                    # Try to find the actual downloaded file
+                    if success:
+                        for ext in [".mp4", ".webm", ".mov", ".mkv"]:
+                            potential_file = item.output_dir / f"{output_path.stem}{ext}"
+                            if potential_file.exists():
+                                item.download_path = str(potential_file)
+                                item.file_size = potential_file.stat().st_size
+                                break
+                else:
+                    success = download_image(item.url, output_path)
+                    if success:
+                        item.download_path = str(output_path)
+                        item.file_size = output_path.stat().st_size
+                        
+            except Exception as e:
+                logger.error(f"Download failed for {item.url}: {str(e)}")
+                item.error_message = f"Download failed: {str(e)}"
+                return False
+            
+            # Verify download
+            if success and item.download_path:
+                try:
+                    # Check if file exists and has size
+                    if not pathlib.Path(item.download_path).exists():
+                        logger.error(f"Downloaded file not found: {item.download_path}")
+                        item.error_message = "Downloaded file not found"
+                        return False
+                        
+                    if pathlib.Path(item.download_path).stat().st_size == 0:
+                        logger.error(f"Downloaded file is empty: {item.download_path}")
+                        item.error_message = "Downloaded file is empty"
+                        return False
+                        
+                except Exception as e:
+                    logger.error(f"Failed to verify download: {str(e)}")
+                    item.error_message = f"Failed to verify download: {str(e)}"
+                    return False
             
             # Update database if available
             if success and self.db and item.item_type == "submission":
@@ -317,6 +352,7 @@ class DownloadManager:
                         self.db.mark_post_downloaded(item.item_id)
                 except Exception as db_err:
                     logger.error(f"Database error: {str(db_err)}")
+                    # Don't fail the download just because database update failed
             
             return success
             
